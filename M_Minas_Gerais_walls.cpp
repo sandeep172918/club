@@ -1,3 +1,6 @@
+//Author: sandeep172918
+//Date: 2025-10-01 17:05
+
 #include <bits/stdc++.h>
 #include <ext/pb_ds/assoc_container.hpp>
 #include <ext/pb_ds/tree_policy.hpp>
@@ -15,9 +18,6 @@
 #define get(v,n) vll v(n);fr(i,n)cin>>v[i]
 #define ff first
 #define ss second
-#define tr true
-#define fs false
-#define bitc(x) __builtin_popcountll(x)
 #define mxe(v)  *max_element(v.begin(),v.end())
 #define mne(v)  *min_element(v.begin(),v.end())
 #define psb(a) push_back(a)
@@ -37,22 +37,18 @@ const int MOD=1e9+7;
 using namespace __gnu_pbds;
 template <typename T>
 using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
-const lli  inf=-1e18;
+ 
 class Segment_Tree{
    struct node{
-    lli sum,psum,ssum,ans;
-   // lli lazy;
+    lli sum;
+  //  lli lazy;
+    lli a;
+    lli d;
     node(){
-        sum=0;
-        psum=inf;
-        ssum=inf;
-        ans=inf;
-    }
-    node(lli val){
-        sum=val;
-        psum=val;
-        ssum=val;
-        ans=val;
+        sum=1e18;
+     //   lazy=0;
+        a=0;
+        d=0;
     }
    };
 
@@ -60,6 +56,7 @@ class Segment_Tree{
    vector<lli>v;
    lli n;
    public:
+
     Segment_Tree(vector<lli>&a){
        n=a.size(); 
        v=a;
@@ -67,20 +64,20 @@ class Segment_Tree{
        build(1,0,n-1);
 
     }
-  
+
     node merge(node a,node b){ //isme lazy nhi sochna hota
         node temp;
-        temp.sum=a.sum+b.sum;
-        temp.psum=max(a.psum,a.sum+b.psum); 
-        temp.ssum=max(b.ssum,b.sum+a.ssum);
-        temp.ans=max({a.ans,b.ans,a.ssum+b.psum});
+        temp.sum=min(a.sum,b.sum);
         return temp;
     }
 
 
     void build(lli id,lli l,lli r){
         if(l==r){
-           t[id]=node(v[l]);
+            t[id].sum=v[l];
+           // t[id].lazy=0;
+            t[id].a=0;
+            t[id].d=0;
             return;
         }
         lli mid=(l+r)/2;
@@ -88,25 +85,49 @@ class Segment_Tree{
         build(2*id+1,mid+1,r);
         t[id]=merge(t[2*id],t[2*id+1]);
     }
-   
-    void update(lli id,lli l,lli r,lli idx,lli val){
-     // push(id,l,r);
-      if(idx<l || r<idx){
+    
+
+
+    void push_down(lli child,lli aa,lli dd){
+        t[child].sum+=aa;
+        t[child].a+=aa;
+        t[child].d+=dd;
+    }
+
+    void push(lli id,lli l,lli r){
+       if(t[id].a==0 && t[id].d==0)return;
+       if(l!=r){
+        
+         lli mid=(l+r)/2;
+         lli k=mid-l+1;
+          push_down(2*id,t[id].a,t[id].d);
+         push_down(2*id+1,t[id].a+k*t[id].d,t[id].d);
+       }
+      
+       t[id].a=0;
+       t[id].d=0;
+    }
+
+    void update(lli id,lli l,lli r,lli lq,lli rq,lli aa,lli dd){
+      push(id,l,r);
+      if(rq<l || r<lq){
         return;
       }
-      if(l==r){
-        v[l]+=val;
-        t[id]=node(v[l]);
+      if(lq<=l && r<=rq){
+        
+        t[id].a=aa;
+        t[id].d=dd;
+        push(id,l,r);
         return;
       }
       lli mid=(l+r)/2;
-      update(2*id,l,mid,idx,val);
-      update(2*id+1,mid+1,r,idx,val);
+      update(2*id,l,mid,lq,rq,aa,dd);
+      update(2*id+1,mid+1,r,lq,rq,aa,dd);
       t[id]=merge(t[2*id],t[2*id+1]);
     }
     
     node query(lli id,lli l,lli r,lli lq,lli rq){
-     // push(id,l,r);
+      push(id,l,r);
       if(rq<l || r<lq){
         return node();
       }
@@ -118,39 +139,39 @@ class Segment_Tree{
     }
     lli quer(){
         node ans=query(1,0,n-1,0,n-1);
-        return ans.ans;
+        return ans.sum;
     }
 };
 
 
-void solve(){
-lli n,k;
-cin>>n>>k;
-get(a,n);
-get(b,n);
-Segment_Tree st(a);
 
-if(k%2==0){
- cout<<st.quer()<<'\n';
-}else{
-  lli ans=inf;
-  fr(i,n){
-    st.update(1,0,n-1,i,b[i]);
-    ans=max(ans,st.quer());
-    st.update(1,0,n-1,i,-b[i]);
-  }
-  cout<<ans<<'\n';
+void solve(){
+lli n,k;cin>>n>>k;
+get(v,n);
+reverse(all(v));
+Segment_Tree sw(v);
+lli ans=0;
+fr(i,n){
+    lli low=i;
+    lli high=i+k;
+    high=min(high,n-1);
+    lli a=k;
+    lli d=-1;
+    sw.update(1,0,n-1,low,high,a,d);
+    ans=max(ans,sw.quer());
+    sw.update(1,0,n-1,low,high,-a,-d);
+
+
+
 }
 
-
- 
+cout<<ans<<'\n';
 }
 
 int32_t main(){
 fastio;
-lli test=1;
-cin>>test;
-while(test--){
+lli tt=1;
+while(tt--){
 solve();
 }
 }
