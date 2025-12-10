@@ -1,177 +1,109 @@
-//Author: sandeep172918
-//Date: 2025-10-01 17:05
-
 #include <bits/stdc++.h>
-#include <ext/pb_ds/assoc_container.hpp>
-#include <ext/pb_ds/tree_policy.hpp>
-#define lli long long int
-#define fr(i,n) for(lli i=0;i<n;i++)
-#define frs(i,a,b) for(lli i=a;i<=b;i++)
-#define rfr(i,b,a) for(lli i=b;i>=a;i--)
-#define srt(v) sort(v.begin(),v.end())
-#define rsrt(v) sort(v.rbegin(),v.rend())
-#define pr pair<lli,lli>
-#define vll vector<lli>
-#define vbl vector<bool>
-#define vpr vector<pr>
-#define vvll vector<vector<lli>>
-#define get(v,n) vll v(n);fr(i,n)cin>>v[i]
-#define ff first
-#define ss second
-#define mxe(v)  *max_element(v.begin(),v.end())
-#define mne(v)  *min_element(v.begin(),v.end())
-#define psb(a) push_back(a)
-#define ppb pop_back()
-#define all(v) v.begin(),v.end()
-#define rall(v) v.rbegin(),v.rend()
-#define sq(x) sqrtl(x)
-#define fastio ios::sync_with_stdio(false); cin.tie(0); cout.tie(0)
-#define yes cout<<"YES\n"
-#define no cout<<"NO\n"
-#define no1 cout<<"-1\n"
-#define nl cout<<"\n"
-#define out(v) fr(i,v.size())cout<<v[i]<<" ";nl
-#define srtp(v) sort(all(v),[](const pr& a,const pr& b){if(a.ff== b.ff)return a.ss>b.ss; return a.ff<b.ff;});
 using namespace std;
-const int MOD=1e9+7;
-using namespace __gnu_pbds;
-template <typename T>
-using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
- 
-class Segment_Tree{
-   struct node{
-    lli sum;
-  //  lli lazy;
-    lli a;
-    lli d;
-    node(){
-        sum=1e18;
-     //   lazy=0;
-        a=0;
-        d=0;
-    }
-   };
 
-   vector<node>t;
-   vector<lli>v;
-   lli n;
-   public:
+struct SegTree {
+    struct Node {
+        long long mn;     // minimum value in range
+        long long lazyA;  // AP starting term
+        long long lazyD;  // AP common diff
+        bool lazy;
+        Node() : mn(0), lazyA(0), lazyD(0), lazy(false) {}
+    };
 
-    Segment_Tree(vector<lli>&a){
-       n=a.size(); 
-       v=a;
-       t.resize(4*n+1);
-       build(1,0,n-1);
+    int n;
+    vector<Node> st;
 
-    }
+    SegTree(int n) : n(n), st(4*n) {}
 
-    node merge(node a,node b){ //isme lazy nhi sochna hota
-        node temp;
-        temp.sum=min(a.sum,b.sum);
-        return temp;
-    }
-
-
-    void build(lli id,lli l,lli r){
-        if(l==r){
-            t[id].sum=v[l];
-           // t[id].lazy=0;
-            t[id].a=0;
-            t[id].d=0;
+    // Build with initial array
+    void build(int node, int l, int r, vector<long long> &arr) {
+        if(l == r) {
+            st[node].mn = arr[l];
             return;
         }
-        lli mid=(l+r)/2;
-        build(2*id,l,mid);
-        build(2*id+1,mid+1,r);
-        t[id]=merge(t[2*id],t[2*id+1]);
-    }
-    
-
-
-    void push_down(lli child,lli aa,lli dd){
-        t[child].sum+=aa;
-        t[child].a+=aa;
-        t[child].d+=dd;
+        int mid = (l+r)/2;
+        build(node*2, l, mid, arr);
+        build(node*2+1, mid+1, r, arr);
+        st[node].mn = min(st[node*2].mn, st[node*2+1].mn);
     }
 
-    void push(lli id,lli l,lli r){
-       if(t[id].a==0 && t[id].d==0)return;
-       if(l!=r){
-        
-         lli mid=(l+r)/2;
-         lli k=mid-l+1;
-          push_down(2*id,t[id].a,t[id].d);
-         push_down(2*id+1,t[id].a+k*t[id].d,t[id].d);
-       }
-      
-       t[id].a=0;
-       t[id].d=0;
+    // Apply AP update to this node for segment [l, r]
+    void apply(int node, int l, int r, long long a, long long d) {
+        long long len = r - l + 1;
+
+        long long last = a + (len - 1) * d;
+        long long mn_add = min(a, last); // since AP can be increasing or decreasing
+        st[node].mn += mn_add;
+
+        // accumulate lazy
+        st[node].lazyA += a;
+        st[node].lazyD += d;
+        st[node].lazy = true;
     }
 
-    void update(lli id,lli l,lli r,lli lq,lli rq,lli aa,lli dd){
-      push(id,l,r);
-      if(rq<l || r<lq){
-        return;
-      }
-      if(lq<=l && r<=rq){
-        
-        t[id].a=aa;
-        t[id].d=dd;
-        push(id,l,r);
-        return;
-      }
-      lli mid=(l+r)/2;
-      update(2*id,l,mid,lq,rq,aa,dd);
-      update(2*id+1,mid+1,r,lq,rq,aa,dd);
-      t[id]=merge(t[2*id],t[2*id+1]);
+    // Push lazy to children
+    void push(int node, int l, int r) {
+        if(!st[node].lazy) return;
+
+        int mid = (l+r)/2;
+
+        long long a = st[node].lazyA;
+        long long d = st[node].lazyD;
+
+        // left child receives AP starting at a
+        apply(node*2, l, mid, a, d);
+
+        // right child receives AP starting at a + (mid+1 - l)*d
+        long long shift = (mid + 1 - l);
+        apply(node*2+1, mid+1, r, a + shift * d, d);
+
+        st[node].lazyA = st[node].lazyD = 0;
+        st[node].lazy = false;
     }
-    
-    node query(lli id,lli l,lli r,lli lq,lli rq){
-      push(id,l,r);
-      if(rq<l || r<lq){
-        return node();
-      }
-      if(lq<=l && r<=rq){
-        return t[id];
-      }
-      lli mid=(l+r)/2;
-      return merge(query(2*id,l,mid,lq,rq),query(2*id+1,mid+1,r,lq,rq));
+
+    // Range update: add an AP to [L, R]
+    void update(int node, int l, int r, int L, int R, long long a, long long d) {
+        if(r < L || R < l) return;
+        if(L <= l && r <= R) {
+            long long offset = l - L; // how much AP shifted for this segment
+            apply(node, l, r, a + offset*d, d);
+            return;
+        }
+
+        push(node, l, r);
+        int mid = (l+r)/2;
+
+        update(node*2, l, mid, L, R, a, d);
+        update(node*2+1, mid+1, r, L, R, a, d);
+        st[node].mn = min(st[node*2].mn, st[node*2+1].mn);
     }
-    lli quer(){
-        node ans=query(1,0,n-1,0,n-1);
-        return ans.sum;
+
+    // Range min query
+    long long query(int node, int l, int r, int L, int R) {
+        if(r < L || R < l) return LLONG_MAX;
+        if(L <= l && r <= R) return st[node].mn;
+
+        push(node, l, r);
+
+        int mid = (l+r)/2;
+        return min(query(node*2, l, mid, L, R),
+                   query(node*2+1, mid+1, r, L, R));
     }
 };
 
-
-
 void solve(){
-lli n,k;cin>>n>>k;
-get(v,n);
-reverse(all(v));
-Segment_Tree sw(v);
-lli ans=0;
-fr(i,n){
-    lli low=i;
-    lli high=i+k;
-    high=min(high,n-1);
-    lli a=k;
-    lli d=-1;
-    sw.update(1,0,n-1,low,high,a,d);
-    ans=max(ans,sw.quer());
-    sw.update(1,0,n-1,low,high,-a,-d);
-
-
-
+    int n,k;cin>>n>>k;
+    vector<int>v(n);
+    for(int i=0;i<n;i++){
+       
+    }
 }
 
-cout<<ans<<'\n';
-}
 
 int32_t main(){
-fastio;
-lli tt=1;
-while(tt--){
+
+int test=1;
+while(test--){
 solve();
 }
 }
