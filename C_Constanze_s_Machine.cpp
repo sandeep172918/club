@@ -1,5 +1,5 @@
 //Author: sandeep172918
-//Date: 2025-12-12 14:51
+//Date: 2025-12-12 11:28
 
 #include <bits/stdc++.h>
 #include <ext/pb_ds/assoc_container.hpp>
@@ -40,28 +40,74 @@ const int MOD=1e9+7;
 using namespace __gnu_pbds;
 template <typename T>
 using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
- 
-void solve(){
-lli n,k;cin>>n>>k;
-vpr p(k);
-fr(i,k){
-    lli x,y;cin>>x>>y;
-    p[i]={x,y};
+ vll fib(2e5);
+void pre(){
+    fib[1]=1;
+    fib[2]=2;
+    fib[3]=3;
+    frs(i,4,2e5-1){
+        fib[i]=(fib[i-1]+fib[i-2])%MOD;
+    }
 }
-srt(p);
-lli prev=p[0].ff-1;
-lli ans=0;
+static inline lli mod_pow(lli a, lli e, lli m=MOD){
+        lli r = 1 % m;
+        a %= m;
+        while(e){
+            if(e & 1) r = (__int128)r * a % m;
+            a = (__int128)a * a % m;
+            e >>= 1;
+        }
+        return r;
+    }
 
-fr(i,k){
-    
+void solve(){
+string s;cin>>s;
+lli n=s.size();
+lli curr=0;
+map<lli,lli>m;
+fr(i,n){
+     if(s[i]=='m' || s[i]=='w'){
+        cout<<"0\n";
+        return;
+    }
 }
+fr(i,n){
+   
+    if(s[i]=='n'){
+       curr++;
+    }else{
+        if(curr)
+        m[curr]++;
+        curr=0;
+    }
+}
+if(curr)m[curr]++;
+curr=0;
+fr(i,n){
+    if(s[i]=='u'){
+       curr++;
+    }else{
+        if(curr)
+        m[curr]++;
+        curr=0;
+    }
+}
+if(curr)m[curr]++;
+lli ans=1;
+for(auto &it:m){
+   // cout<<it.ff<<' '<<it.ss<<'\n';
+   ans=((ans%MOD)*mod_pow(fib[it.ff],it.ss))%MOD;
+}
+cout<<ans<<'\n';
+
+
 
 }
 
 int32_t main(){
 fastio;
+pre();
 lli test=1;
-cin>>test;
 while(test--){
 solve();
 }
