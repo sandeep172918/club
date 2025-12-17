@@ -17,7 +17,9 @@ import {
 import { MainNav } from '@/components/layout/main-nav';
 import { UserNav } from '@/components/layout/user-nav';
 import { AppLogo } from '@/components/layout/app-logo';
-import { Breadcrumbs } from '@/components/layout/breadcrumbs';
+import { SuspendedBreadcrumbs } from '@/components/layout/suspended-breadcrumbs';
+
+
 // Removed: import { Bell } from 'lucide-react';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -46,8 +48,9 @@ export default function RootLayout({
               <MainNav />
               <SidebarSeparator />
               <div className="px-4 py-2 group-data-[collapsible=icon]:hidden">
-                <Breadcrumbs />
+                <SuspendedBreadcrumbs />
               </div>
+              
             </SidebarContent>
             <SidebarFooter className="p-2">
                <div className="group-data-[collapsible=icon]:hidden w-full">
