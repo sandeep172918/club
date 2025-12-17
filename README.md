@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 Coding Club Manager
 
-## Getting Started
+Coding Club Manager is a comprehensive web application built with **Next.js** to streamline the management of a student coding club.  
+It provides a centralized dashboard for tracking student progress, managing resources, organizing events, and fostering competitive programming culture.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 📸 Screenshots
+
+![Dashboard](public/screenshots/dashboard.png)
+![Leaderboard](public/screenshots/leaderboard.png)
+![Resources](public/screenshots/resources.png)
+
+> 📌 _Screenshots are stored inside `public/screenshots/`_
+
+---
+
+## ✨ Features
+
+- **Dashboard**
+  - Overview of club statistics
+  - Participation rates
+  - Upcoming events and contests
+
+- **Student Management**
+  - Add, edit, and view student details
+  - Import student lists in bulk
+
+- **Attendance Tracking**
+  - Monitor attendance for meetings and events
+  - Maintain historical attendance records
+
+- **Leaderboard**
+  - Dynamic leaderboard for contests and activities
+  - Rank students based on performance
+
+- **Resource Hub**
+  - Centralized learning materials
+  - Categorized into:
+    - Theory
+    - Practice
+    - Think
+
+- **Upcoming Contests**
+  - Keep members informed about upcoming coding competitions
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework:** [Next.js](https://nextjs.org/)
+- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
+- **AI / Generative:** [Genkit (Firebase)](https://firebase.google.com/docs/genkit)
+- **Linting:** [ESLint](https://eslint.org/)
+
+---
+
+## ⚙️ Getting Started
+
+Follow these instructions to get the project running locally.
+
+---
+
+### 📌 Prerequisites
+
+Make sure you have the following installed:
+
+- **Node.js** (v18.x or later)  
+  👉 https://nodejs.org/en/
+- **npm** or **yarn**
+
+---
+
+### 📥 Installation & Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <your-repository-url>
+   cd <repository-folder>
+2. **Install dependencies**
+   ```bash
+   npm install
+3. **Run the development server**
+   ```bash
+   npm run dev
+4. **Open in browser**
+   ```bash
+   http://localhost:3000
+ 
+---
+
+### 🗂️ Project Structure
+ 
+``` 
+.
+├── public/                 # Static assets
+│   └── screenshots/        # Project screenshots (used in README)
+│
+├── src/
+│   ├── app/                # Application routes (Next.js App Router)
+│   ├── components/         # Reusable UI components
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utility functions and shared logic
+│   └── types/              # TypeScript type definitions
+│
+├── package.json            # Project dependencies and scripts
+└── tsconfig.json           # TypeScript configuration
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+If you want, next I can:
+- ⭐ optimize this README for **resume/recruiter impact**
+- ⭐ add **badges** (Next.js, TypeScript, Tailwind, Vercel)
+- ⭐ make a **one-line powerful project description** for your resume
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Just say 👍
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
