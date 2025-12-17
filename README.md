@@ -1,6 +1,6 @@
-# 🚀 Coding Club Manager
+# 🚀 CP Club Manager
 
-Coding Club Manager is a comprehensive web application built with **Next.js** to streamline the management of a student coding club.  
+CP Club Manager is a comprehensive web application built with **Next.js** to streamline the management of a student competitive coding club.  
 It provides a centralized dashboard for tracking student progress, managing resources, organizing events, and fostering competitive programming culture.
 
 ---
@@ -9,9 +9,9 @@ It provides a centralized dashboard for tracking student progress, managing reso
 
 ![Dashboard](public/screenshots/dashboard.png)
 ![Leaderboard](public/screenshots/leaderboard.png)
-![Resources](public/screenshots/resources.png)
+![Attendence Tracker](public/screenshots/attendence.png)
+![Student manager](public/screenshots/student.png)
 
-> 📌 _Screenshots are stored inside `public/screenshots/`_
 
 ---
 
