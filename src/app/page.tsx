@@ -48,18 +48,6 @@ export default function DashboardPage() {
         <ParticipationChart />
       </div>
       
-      {/* UpcomingContestsCard removed from here as it's now a separate page */}
-      
-      {/* Placeholder for recent activity - keeping this commented out
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No recent activity to display.</p>
-        </CardContent>
-      </Card>
-      */}
     </div>
   );
 }

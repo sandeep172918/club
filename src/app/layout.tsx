@@ -25,8 +25,8 @@ import { SuspendedBreadcrumbs } from '@/components/layout/suspended-breadcrumbs'
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
-  title: 'CP.cpp - Student Progress Tracker',
-  description: 'Track coding contest progress for students on Codeforces and CodeChef.',
+  title: 'CP.cpp',
+  description: 'A competitive coding club management app to track coding contest progress for students on Codeforces and CodeChef.',
 };
 
 export default function RootLayout({
