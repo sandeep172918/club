@@ -109,12 +109,3 @@ Make sure you have the following installed:
 
 ```
 
----
-
-If you want, next I can:
-- ⭐ optimize this README for **resume/recruiter impact**
-- ⭐ add **badges** (Next.js, TypeScript, Tailwind, Vercel)
-- ⭐ make a **one-line powerful project description** for your resume
-
-Just say 👍
-
