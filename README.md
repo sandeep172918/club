@@ -52,7 +52,6 @@ It provides a centralized dashboard for tracking student progress, managing reso
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
-- **AI / Generative:** [Genkit (Firebase)](https://firebase.google.com/docs/genkit)
 - **Linting:** [ESLint](https://eslint.org/)
 
 ---

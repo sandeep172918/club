@@ -40,7 +40,7 @@ body {
     --chart-2: 122 39% 49%; /* Accent */
     --chart-3: 25 80% 55%; /* Orange-ish for variety */
     --chart-4: 280 65% 60%; /* Purple-ish for variety */
-    --chart-5: 340 75% 55%; /* Pink-ish for variety */
+    --chart-5: 340 65% 65%;
 
     --radius: 0.5rem;
 
@@ -63,8 +63,8 @@ body {
     --card: 231 15% 12%;
     --card-foreground: 0 0% 96.1%;
 
-    --popover: 231 15% 12%;
-    --popover-foreground: 0 0% 96.1%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 231 15% 12%;
 
     --primary: 231 48% 58%; /* Lighter Deep Blue for dark mode */
     --primary-foreground: 0 0% 10%; /* Dark text */
@@ -103,9 +103,6 @@ body {
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
     @apply bg-background text-foreground;
   }
