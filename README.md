@@ -1,4 +1,4 @@
-# 🚀 CP Club Manager
+# 🚀CP.cpp (CP Club Manager)
 
 CP Club Manager is a comprehensive web application built with **Next.js** to streamline the management of a student competitive coding club.  
 It provides a centralized dashboard for tracking student progress, managing resources, organizing events, and fostering competitive programming culture.
@@ -20,11 +20,9 @@ It provides a centralized dashboard for tracking student progress, managing reso
 - **Dashboard**
   - Overview of club statistics
   - Participation rates
-  - Upcoming events and contests
 
 - **Student Management**
   - Add, edit, and view student details
-  - Import student lists in bulk
 
 - **Attendance Tracking**
   - Monitor attendance for meetings and events
@@ -52,6 +50,8 @@ It provides a centralized dashboard for tracking student progress, managing reso
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
+- **Database:** [MongoDB](https://www.mongodb.com/)
+- **API:** [Codeforces API](https://codeforces.com/api/help)
 - **Linting:** [ESLint](https://eslint.org/)
 
 ---
@@ -59,8 +59,6 @@ It provides a centralized dashboard for tracking student progress, managing reso
 ## ⚙️ Getting Started
 
 Follow these instructions to get the project running locally.
-
----
 
 ### 📌 Prerequisites
 
@@ -70,25 +68,77 @@ Make sure you have the following installed:
   👉 https://nodejs.org/en/
 - **npm** or **yarn**
 
----
-
 ### 📥 Installation & Setup
 
 1. **Clone the repository**
    ```bash
    git clone <your-repository-url>
    cd <repository-folder>
+   ```
 2. **Install dependencies**
    ```bash
    npm install
-3. **Run the development server**
+   ```
+3. **Set up environment variables**
+   Create a `.env.local` file in the root of the project and add the following variables:
+   ```env
+   MONGO_URL=<your-mongodb-connection-string>
+   ADMIN_SECRET_CODE=<your-secret-code>
+   ```
+4. **Run the development server**
    ```bash
    npm run dev
-4. **Open in browser**
+   ```
+5. **Open in browser**
    ```bash
    http://localhost:3000
- 
+   ```
+
 ---
+
+## 📖 API Endpoints
+
+| Endpoint                      | Method | Description                                          |
+| ----------------------------- | ------ | ---------------------------------------------------- |
+| `/api/attendance`             | GET    | Fetches attendance data for all students.            |
+| `/api/contests`               | GET    | Fetches the latest 100 finished contests.            |
+| `/api/contests`               | POST   | Syncs the latest 100 contests with the database.     |
+| `/api/custom-contests`        | POST   | Adds a new custom contest.                           |
+| `/api/dashboard`              | GET    | Fetches dashboard statistics.                        |
+| `/api/leaderboard`            | GET    | Fetches the leaderboard.                             |
+| `/api/students`               | GET    | Fetches all students.                                |
+| `/api/students`               | POST   | Creates a new student.                               |
+| `/api/students/[id]`          | PUT    | Updates a student's information.                     |
+| `/api/students/[id]`          | DELETE | Deletes a student.                                   |
+| `/api/students/[id]/verify`   | POST   | Verifies and syncs a student's Codeforces data.      |
+| `/api/topics`                 | GET    | Fetches a list of topics.                            |
+
+---
+
+## 🚀 Deployment
+
+This application is ready to be deployed on [Vercel](httpsai.docs.vercel.com/deploy).
+
+1. **Push your code to a Git repository.**
+2. **Import your project into Vercel.**
+3. **Set the environment variables** in the Vercel project settings.
+4. **Deploy!**
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. **Fork the repository.**
+2. **Create a new branch:** `git checkout -b my-new-feature`
+3. **Make your changes.**
+4. **Commit your changes:** `git commit -am 'Add some feature'`
+5. **Push to the branch:** `git push origin my-new-feature`
+6. **Submit a pull request.**
+
+---
+
 
 ### 🗂️ Project Structure
  
@@ -108,4 +158,3 @@ Make sure you have the following installed:
 └── tsconfig.json           # TypeScript configuration
 
 ```
-
