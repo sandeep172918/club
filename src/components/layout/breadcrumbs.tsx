@@ -3,9 +3,13 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Fragment } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { mockTopics } from '@/lib/mock-data';
+
+interface Topic {
+  title: string;
+  description: string;
+}
 
 // Helper function to capitalize strings
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -13,7 +17,27 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function Breadcrumbs() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const topicId = searchParams.get('topic');
+  const [topics, setTopics] = useState<Topic[]>([]);
+  const topicTitleFromParam = searchParams.get('topic');
+
+
+  useEffect(() => {
+    async function fetchTopics() {
+      // Only fetch if we are on a path that might need topics
+      if (pathname.includes('/resources')) {
+        try {
+          const response = await fetch('/api/topics');
+          if (response.ok) {
+            const data = await response.json();
+            setTopics(data);
+          }
+        } catch (error) {
+          console.error("Failed to fetch topics for breadcrumbs:", error);
+        }
+      }
+    }
+    fetchTopics();
+  }, [pathname]);
 
   // Don't show breadcrumbs on the homepage
   if (pathname === '/') {
@@ -21,9 +45,10 @@ export function Breadcrumbs() {
   }
 
   const segments = pathname.split('/').filter(Boolean);
-
-  // Find topic name from mock data
-  const topicName = topicId ? mockTopics.find(t => t.id === topicId)?.title : null;
+  
+  // Find topic name from the fetched topics
+  const topic = topicTitleFromParam ? topics.find(t => t.title.toLowerCase().replace(/\s/g, '-') === topicTitleFromParam) : null;
+  const topicName = topic?.title;
 
   return (
     <nav aria-label="Breadcrumb" className="flex items-center text-xs text-sidebar-foreground/70">
@@ -34,7 +59,6 @@ export function Breadcrumbs() {
           
           let content = capitalize(segment.replace(/-/g, ' '));
           
-          // If this is the last segment and a topic is specified, show the topic name
           if (isLast && topicName) {
             content = topicName;
           }
@@ -43,7 +67,7 @@ export function Breadcrumbs() {
             <Fragment key={path}>
               <li>
                 <div className="flex items-center">
-                  <Link href={path + (topicId ? `?topic=${topicId}` : '')} className="hover:text-sidebar-foreground">
+                  <Link href={path + (topicTitleFromParam ? `?topic=${topicTitleFromParam}` : '')} className="hover:text-sidebar-foreground">
                     {content}
                   </Link>
                 </div>

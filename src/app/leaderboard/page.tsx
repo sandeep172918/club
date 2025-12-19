@@ -1,12 +1,8 @@
 import { PageHeader } from '@/components/page-header';
 import { LeaderboardTable } from '@/components/leaderboard/leaderboard-table';
-import { mockLeaderboard } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LeaderboardPage() {
-  // In a real app, data would be fetched here
-  const leaderboardData = mockLeaderboard;
-
   return (
     <div className="space-y-6">
       <PageHeader
@@ -18,7 +14,7 @@ export default function LeaderboardPage() {
           <CardTitle>Overall Rankings</CardTitle>
         </CardHeader>
         <CardContent>
-          <LeaderboardTable data={leaderboardData} />
+          <LeaderboardTable />
         </CardContent>
       </Card>
     </div>

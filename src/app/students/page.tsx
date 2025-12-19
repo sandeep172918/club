@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { StudentList } from '@/components/students/student-list';
 import { AddStudentForm } from '@/components/students/add-student-form';
-import { mockStudents } from '@/lib/mock-data';
 import type { Student } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,41 +16,101 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { PlusCircle } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
 
 // Type for data coming from the AddStudentForm
 type NewStudentData = Omit<Student, 'id' | 'ratingHistory' | 'contestParticipation' | 'problemsSolved' | 'totalContestsGiven' | 'currentRating'>;
 
-// Type for data coming from the EditStudentForm (name, cfHandle, ccHandle only)
-type EditableStudentData = Pick<Student, 'name' | 'codeforcesHandle' | 'codechefHandle'>;
+type EditableStudentData = {
+    name: string;
+    codeforcesHandle: string;
+    gender?: string;
+    email?: string;
+    dob?: string;
+    tshirtSize?: string;
+    instituteName?: string;
+};
 
 export default function StudentsPage() {
-  const [students, setStudents] = useState<Student[]>(mockStudents);
   const [isAddStudentDialogOpen, setIsAddStudentDialogOpen] = useState(false);
+  const { toast } = useToast();
 
-  const handleAddStudent = (newStudentData: NewStudentData) => {
-    const newStudent: Student = {
-      ...newStudentData,
-      id: String(Date.now()), // Mock ID
-      currentRating: 0, 
-      problemsSolved: 0, // Default for new students
-      totalContestsGiven: 0, // Default for new students
-      ratingHistory: [],
-      contestParticipation: [],
-    };
-    setStudents(prevStudents => [newStudent, ...prevStudents]); // Add to the beginning of the list
+  const handleAddStudent = async (newStudentData: NewStudentData) => {
+    const response = await fetch('/api/students', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newStudentData),
+    });
+
+    if (response.ok) {
+      toast({ title: "Success", description: "New student has been added." });
+      setIsAddStudentDialogOpen(false);
+      // Data will be re-fetched by the StudentList component automatically
+    } else {
+      const errorData = await response.json();
+      toast({
+        variant: "destructive",
+        title: "Error adding student",
+        description: errorData.message || 'An unexpected error occurred.',
+      });
+    }
   };
 
-  // Updated to accept only editable fields
-  const handleUpdateStudent = (studentId: string, updatedData: EditableStudentData) => {
-    setStudents(prevStudents =>
-      prevStudents.map(student =>
-        student.id === studentId ? { ...student, ...updatedData } : student
-      )
-    );
+  const handleUpdateStudent = async (studentId: string, updatedData: EditableStudentData, secretCode: string) => {
+    const response = await fetch(`/api/students/${studentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...updatedData, secretCode }),
+    });
+
+    if (response.ok) {
+       toast({ title: "Success", description: "Student details have been updated." });
+    } else {
+       const errorData = await response.json();
+       toast({
+        variant: "destructive",
+        title: "Error updating student",
+        description: errorData.message || 'An unexpected error occurred.',
+      });
+    }
   };
 
-  const handleDeleteStudent = (studentId: string) => {
-    setStudents(prevStudents => prevStudents.filter(student => student.id !== studentId));
+  const handleDeleteStudent = async (studentId: string, secretCode: string) => {
+    const response = await fetch(`/api/students/${studentId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secretCode }),
+    });
+
+     if (response.ok) {
+       toast({ title: "Success", description: "Student has been deleted." });
+    } else {
+       const errorData = await response.json();
+       toast({
+        variant: "destructive",
+        title: "Error deleting student",
+        description: errorData.message || 'An unexpected error occurred.',
+      });
+    }
+  };
+
+  const handleSyncStudent = async (studentId: string) => {
+    toast({ title: "Syncing...", description: "Fetching latest data from Codeforces." });
+    const response = await fetch(`/api/students/${studentId}/verify`, {
+      method: 'POST',
+    });
+
+    if (response.ok) {
+      toast({ title: "Success", description: "Student data has been synced." });
+    } else {
+      const errorData = await response.json();
+      toast({
+        variant: "destructive",
+        title: "Error syncing student",
+        description: errorData.message || 'An unexpected error occurred.',
+      });
+    }
   };
 
 
@@ -75,11 +134,8 @@ export default function StudentsPage() {
                   Enter the details for the new student. Click save when you're done.
                 </DialogDescription>
               </DialogHeader>
-              <AddStudentForm 
-                onFormSubmitSuccess={(data) => {
-                  handleAddStudent(data);
-                  setIsAddStudentDialogOpen(false);
-                }} 
+              <AddStudentForm
+                onFormSubmitSuccess={handleAddStudent}
               />
             </DialogContent>
           </Dialog>
@@ -88,9 +144,9 @@ export default function StudentsPage() {
       
       <div className="mt-8">
         <StudentList 
-          students={students} 
           onUpdateStudent={handleUpdateStudent}
           onDeleteStudent={handleDeleteStudent}
+          onSyncStudent={handleSyncStudent}
         />
       </div>
     </div>

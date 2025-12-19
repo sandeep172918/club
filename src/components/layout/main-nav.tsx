@@ -16,7 +16,7 @@ const navItems = [
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/attendance', label: 'Attendance', icon: ClipboardCheck },
   { href: '/students', label: 'Students', icon: Users },
-  { href: '/upcoming-contests', label: 'Upcoming Contests', icon: CalendarDays },
+  { href: '/contest-arena', label: 'Contest Arena', icon: CalendarDays },
   { href: '/resources', label: 'Resources', icon: Library },
 ];
 

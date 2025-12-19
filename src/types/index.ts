@@ -3,18 +3,22 @@ export interface Student {
   id: string;
   name: string;
   codeforcesHandle: string;
-  codechefHandle: string;
   currentRating: number;
-  problemsSolved: number; // New field
-  totalContestsGiven: number; // New field
+  problemsSolved: number;
+  totalContestsGiven: number;
   ratingHistory: { contestId: string; rating: number; change: number }[];
   contestParticipation: { contestId: string; participated: boolean }[];
+  gender?: string;
+  email?: string;
+  dob?: string;
+  tshirtSize?: string;
+  instituteName?: string;
 }
 
 export interface Contest {
   id: string;
   name:string;
-  platform: 'Codeforces' | 'CodeChef';
+  platform: 'Codeforces';
   date: string; // ISO date string
 }
 
@@ -23,7 +27,6 @@ export interface LeaderboardEntry {
   studentId: string;
   name: string;
   codeforcesHandle: string;
-  codechefHandle: string;
   currentRating: number;
   lastContestRatingChange: number;
 }
@@ -34,7 +37,7 @@ export interface AttendanceEntry {
   contestId: string;
   contestName: string;
   contestDate: string;
-  platform: 'Codeforces' | 'CodeChef';
+  platform: 'Codeforces';
   participated: boolean;
 }
 
@@ -42,7 +45,7 @@ export interface ProcessedContestAttendance {
   contestId: string;
   contestName: string;
   contestDate: string;
-  platform: 'Codeforces' | 'CodeChef';
+  platform: 'Codeforces';
   attendancePercentage: number;
   studentAttendance: Record<string, boolean>; // studentId: participated
 }

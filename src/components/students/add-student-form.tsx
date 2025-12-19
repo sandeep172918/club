@@ -8,18 +8,15 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
 import { DialogFooter, DialogClose } from '@/components/ui/dialog';
 
 // This schema defines only the fields for adding a new student.
-// currentRating, problemsSolved, totalContestsGiven will be defaulted in the parent component.
 const addStudentFormSchema = z.object({
   name: z.string().min(2, {
     message: 'Name must be at least 2 characters.',
@@ -27,8 +24,8 @@ const addStudentFormSchema = z.object({
   codeforcesHandle: z.string().min(2, {
     message: 'Codeforces handle must be at least 2 characters.',
   }),
-  codechefHandle: z.string().min(2, {
-    message: 'CodeChef handle must be at least 2 characters.',
+  secretCode: z.string().min(6, {
+    message: 'Secret code must be at least 6 characters.',
   }),
 });
 
@@ -37,32 +34,21 @@ type AddStudentFormValues = z.infer<typeof addStudentFormSchema>;
 
 interface AddStudentFormProps {
   // Callback now only passes the basic student data.
-  onFormSubmitSuccess: (data: AddStudentFormValues) => void;
+  onFormSubmitSuccess: (data: AddStudentFormValues) => Promise<void>;
 }
 
 export function AddStudentForm({ onFormSubmitSuccess }: AddStudentFormProps) {
-  const { toast } = useToast();
   const form = useForm<AddStudentFormValues>({
     resolver: zodResolver(addStudentFormSchema),
     defaultValues: {
       name: '',
       codeforcesHandle: '',
-      codechefHandle: '',
+      secretCode: '',
     },
   });
 
   async function onSubmit(values: AddStudentFormValues) {
-    // Simulate API call / server action
-    console.log('Submitting new student data:', values);
-    
-    await new Promise(resolve => setTimeout(resolve, 500)); // Mock delay
-    
-    toast({
-      title: 'Student Added (Mock)',
-      description: `${values.name} has been added. (This is a mock action)`,
-    });
-    
-    onFormSubmitSuccess(values); // Call the success callback
+    await onFormSubmitSuccess(values); // Call the async success callback
     form.reset(); // Reset form fields
   }
 
@@ -97,14 +83,17 @@ export function AddStudentForm({ onFormSubmitSuccess }: AddStudentFormProps) {
         />
         <FormField
           control={form.control}
-          name="codechefHandle"
+          name="secretCode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>CodeChef Handle</FormLabel>
+              <FormLabel>Secret Code</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., ada_cc" {...field} />
+                <Input type="password" placeholder="Enter a secret code" {...field} />
               </FormControl>
               <FormMessage />
+              <p className="text-xs text-muted-foreground">
+                Remember or write down this password for future reference. If forgotten, contact an admin.
+              </p>
             </FormItem>
           )}
         />

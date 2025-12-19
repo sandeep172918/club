@@ -1,96 +1,127 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/page-header';
 import { AttendanceTable } from '@/components/attendance/attendance-table';
-import { mockAttendance, mockStudents, mockContests } from '@/lib/mock-data';
-import type { Student, Contest, AttendanceEntry, ProcessedContestAttendance } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-// TODO: Add filtering options (e.g., by contest)
-// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { RefreshCw, Loader2 } from 'lucide-react';
+
+// Headers are now Students
+interface AttendanceHeader {
+  id: string;
+  name: string;
+}
+
+// Rows are now Contests
+interface AttendanceRow {
+  id: string;
+  name: string;
+  date: string;
+  attendance: boolean[];
+}
 
 export default function AttendancePage() {
-  const allStudents: Student[] = mockStudents;
-  const contests: Contest[] = mockContests;
-  const attendanceEntries: AttendanceEntry[] = mockAttendance;
-
   const [studentSearchTerm, setStudentSearchTerm] = useState('');
+  const [headers, setHeaders] = useState<AttendanceHeader[]>([]);
+  const [rows, setRows] = useState<AttendanceRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const filteredStudentsForDisplay = useMemo(() => {
-    if (!studentSearchTerm) {
-      return allStudents;
+  async function fetchAttendanceData() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/attendance');
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance data.');
+      }
+      const data = await response.json();
+      setHeaders(data.headers); // Now an array of students
+      setRows(data.rows); // Now an array of contests
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
-    return allStudents.filter(student =>
-      student.name.toLowerCase().includes(studentSearchTerm.toLowerCase())
-    );
-  }, [allStudents, studentSearchTerm]);
+  }
 
-  const processedDataForTable: ProcessedContestAttendance[] = useMemo(() => {
-    return contests.map(contest => {
-      const studentAttendanceStatus: Record<string, boolean> = {};
-      let attendedCount = 0;
+  useEffect(() => {
+    fetchAttendanceData();
+  }, []);
 
-      allStudents.forEach(student => {
-        const entry = attendanceEntries.find(
-          att => att.studentId === student.id && att.contestId === contest.id
-        );
-        const participated = entry ? entry.participated : false;
-        studentAttendanceStatus[student.id] = participated;
-        if (participated) {
-          attendedCount++;
+  const handleSyncContests = async () => {
+    setIsSyncing(true);
+    toast({ title: 'Syncing Contests...', description: 'Fetching latest contest list from Codeforces.' });
+    try {
+        const response = await fetch('/api/contests', { method: 'POST' });
+        if (!response.ok) {
+            throw new Error('Failed to sync contests.');
         }
-      });
-
-      const attendancePercentage = allStudents.length > 0 
-        ? (attendedCount / allStudents.length) * 100 
-        : 0;
-
-      return {
-        contestId: contest.id,
-        contestName: contest.name,
-        contestDate: contest.date,
-        platform: contest.platform,
-        attendancePercentage: parseFloat(attendancePercentage.toFixed(1)),
-        studentAttendance: studentAttendanceStatus,
-      };
-    });
-  }, [contests, allStudents, attendanceEntries]);
+        const result = await response.json();
+        toast({ title: 'Sync Complete', description: `${result.upsertedCount + result.modifiedCount} contests were updated.` });
+        await fetchAttendanceData(); // Refresh attendance data
+    } catch (err: any) {
+        toast({ variant: 'destructive', title: 'Sync Failed', description: err.message });
+    } finally {
+        setIsSyncing(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Attendance Tracking"
-        description="Monitor student participation in coding contests."
+        description="Student participation across all tracked contests."
+        actions={
+            <Button onClick={handleSyncContests} disabled={isSyncing}>
+                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                Sync Contests
+            </Button>
+        }
       />
-      
-      <div className="flex space-x-4 mb-4">
-        <Input 
-          placeholder="Filter by student name..." 
-          className="max-w-sm" 
-          value={studentSearchTerm}
-          onChange={(e) => setStudentSearchTerm(e.target.value)}
-        />
-        {/* 
-        <Select>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by contest" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Contests</SelectItem>
-            {mockContests.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        */}
-      </div>
       
       <Card>
         <CardHeader>
           <CardTitle>Contest Participation Log</CardTitle>
+          <CardDescription>
+            Use the search box to filter students by name.
+          </CardDescription>
+          <div className="pt-4">
+             <Input 
+              placeholder="Filter by student name..." 
+              className="max-w-sm" 
+              value={studentSearchTerm}
+              onChange={(e) => setStudentSearchTerm(e.target.value)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
-          <AttendanceTable data={processedDataForTable} students={filteredStudentsForDisplay} />
+          {isLoading ? (
+            <div className="space-y-2 mt-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          ) : error ? (
+             <Alert variant="destructive" className="mt-4">
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          ) : (
+            <AttendanceTable 
+              headers={headers} 
+              rows={rows} 
+              studentNameFilter={studentSearchTerm}
+            />
+          )}
         </CardContent>
       </Card>
     </div>

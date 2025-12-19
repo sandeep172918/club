@@ -69,17 +69,36 @@ export function StudentDetailsDialog({ student, isOpen, onOpenChange }: StudentD
               {student.codeforcesHandle}
             </a>
           </div>
-          <div className="grid grid-cols-[150px_1fr] items-center gap-4">
-            <span className="text-sm font-medium text-muted-foreground">CodeChef:</span>
-             <a 
-              href={`https://www.codechef.com/users/${student.codechefHandle}`} 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="text-primary hover:underline"
-            >
-              {student.codechefHandle}
-            </a>
-          </div>
+          {student.email && (
+            <div className="grid grid-cols-[150px_1fr] items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">Email:</span>
+              <span>{student.email}</span>
+            </div>
+          )}
+          {student.gender && (
+            <div className="grid grid-cols-[150px_1fr] items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">Gender:</span>
+              <span>{student.gender}</span>
+            </div>
+          )}
+          {student.dob && (
+            <div className="grid grid-cols-[150px_1fr] items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">Date of Birth:</span>
+              <span>{student.dob}</span>
+            </div>
+          )}
+          {student.tshirtSize && (
+            <div className="grid grid-cols-[150px_1fr] items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">T-Shirt Size:</span>
+              <span>{student.tshirtSize}</span>
+            </div>
+          )}
+          {student.instituteName && (
+            <div className="grid grid-cols-[150px_1fr] items-center gap-4">
+              <span className="text-sm font-medium text-muted-foreground">Institute:</span>
+              <span>{student.instituteName}</span>
+            </div>
+          )}
         </div>
 
         <DialogFooter>

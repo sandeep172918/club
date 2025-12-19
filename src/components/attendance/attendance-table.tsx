@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -9,71 +10,98 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import type { ProcessedContestAttendance, Student } from '@/types';
-import { CheckCircle2, XCircle, PercentIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { CheckCircle2, XCircle } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
-interface AttendanceTableProps {
-  data: ProcessedContestAttendance[];
-  students: Student[];
+// Headers are Students
+interface AttendanceHeader {
+  id: string;
+  name: string;
 }
 
-export function AttendanceTable({ data, students }: AttendanceTableProps) {
-  if (data.length === 0) {
-    return <p className="text-muted-foreground">No attendance data to display.</p>;
-  }
-  
-  if (students.length === 0 && data.length > 0) {
-     return <p className="text-muted-foreground">No students match your search criteria, but attendance data exists.</p>;
+// Rows are Contests
+interface AttendanceRow {
+  id: string;
+  name: string;
+  date: string;
+  attendance: boolean[];
+}
+
+interface AttendanceTableProps {
+  headers: AttendanceHeader[];
+  rows: AttendanceRow[];
+  studentNameFilter: string;
+}
+
+export function AttendanceTable({ headers, rows, studentNameFilter }: AttendanceTableProps) {
+  const filteredStudentColumns = useMemo(() => {
+    if (!studentNameFilter) {
+      return headers.map((header, index) => ({ ...header, originalIndex: index }));
+    }
+    return headers
+      .map((header, index) => ({ ...header, originalIndex: index }))
+      .filter(header => header.name.toLowerCase().includes(studentNameFilter.toLowerCase()));
+  }, [headers, studentNameFilter]);
+
+  if (!headers || headers.length === 0) {
+    return <p className="text-muted-foreground mt-4">No students found.</p>;
   }
 
+  if (!rows || rows.length === 0) {
+    return <p className="text-muted-foreground mt-4">No contests found to display.</p>;
+  }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead className="min-w-[200px]">Contest</TableHead>
-          <TableHead>Platform</TableHead>
-          <TableHead className="text-center w-[100px]">
-            <div className="flex items-center justify-center">
-              <PercentIcon className="h-4 w-4 mr-1" /> Att.
-            </div>
-          </TableHead>
-          {students.map((student) => (
-            <TableHead key={student.id} className="text-center min-w-[120px]">{student.name}</TableHead>
-          ))}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {data.map((contestEntry) => (
-          <TableRow key={contestEntry.contestId}>
-            <TableCell className="font-medium">
-              {contestEntry.contestName}
-              <div className="text-xs text-muted-foreground">
-                {format(new Date(contestEntry.contestDate), 'MMM dd, yyyy')}
-              </div>
-            </TableCell>
-            <TableCell>
-              <Badge variant={contestEntry.platform === 'Codeforces' ? 'default' : 'secondary'}>
-                {contestEntry.platform}
-              </Badge>
-            </TableCell>
-            <TableCell className="text-center font-medium">
-              {contestEntry.attendancePercentage}%
-            </TableCell>
-            {students.map((student) => (
-              <TableCell key={student.id} className="text-center">
-                {contestEntry.studentAttendance[student.id] ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-500 inline" aria-label="Attended" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-500 inline" aria-label="Not Attended" />
-                )}
-              </TableCell>
+    <div className="w-full overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="sticky left-0 bg-background min-w-[250px] z-10">Contest</TableHead>
+              <TooltipProvider>
+                {filteredStudentColumns.map((header) => (
+                  <TableHead key={header.id} className="text-center min-w-[60px] h-[140px] relative">
+                     <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[1px] h-[120px] bg-muted">
+                           <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-max [writing-mode:vertical-rl] rotate-180 text-xs">
+                            {header.name}
+                          </span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>{header.name}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TableHead>
+                ))}
+              </TooltipProvider>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell className="font-medium sticky left-0 bg-background z-10">
+                    {row.name}
+                    <div className="text-xs text-muted-foreground">{row.date}</div>
+                </TableCell>
+                {filteredStudentColumns.map((studentCol) => (
+                  <TableCell key={`${row.id}-${studentCol.id}`} className="text-center">
+                    {row.attendance[studentCol.originalIndex] ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500 inline" aria-label="Attended" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500 inline" aria-label="Not Attended" />
+                    )}
+                  </TableCell>
+                ))}
+              </TableRow>
             ))}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+          </TableBody>
+        </Table>
+    </div>
   );
 }
