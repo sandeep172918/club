@@ -19,7 +19,7 @@ interface AdminProfileDialogProps {
 export function AdminProfileDialog({ isOpen, onOpenChange }: AdminProfileDialogProps) {
   // Hardcoded profile details and links
   const profile = {
-    name: 'Admin - Sandeep Kumar',
+    name: 'Sandeep Kumar',
     tagline: 'IIT Dhanbad (CSE\'28)',
     avatar: '/avatar-placeholder.png', // You might want to place a custom image here
     links: [

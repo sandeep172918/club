@@ -20,9 +20,9 @@ export function UserNav() {
 
   // Hardcoded user data for Sandeep Kumar
   const user = { 
-    name: 'Sandeep Kumar', 
+    name: 'Admin', 
     email: 'cp.cpp.club@gmail.com', 
-    avatar: '/avatar-placeholder.png' // You might want to update this to a specific image later
+    avatar: '/logo.png' // You might want to update this to a specific image later
   };
 
   return (
