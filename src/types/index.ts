@@ -4,7 +4,6 @@ export interface Student {
   id: string;
   name: string;
   email: string;
-  hashKey?: string;
   role: 'admin' | 'student';
   codeforcesHandle?: string;
   currentRating: number;

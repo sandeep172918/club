@@ -28,7 +28,6 @@ function ProfilePage() {
     shirtSize?: string;
     sport?: string;
     branch?: string;
-    hashKey?: string;
   }) => {
     if (user) {
       const res = await fetch(`/api/students/${(user as any)._id}`, {

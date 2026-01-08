@@ -13,7 +13,6 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  signin: (email: string, hashKey: string) => Promise<void>;
   signup: (userData: any) => Promise<void>;
 }
 
@@ -28,10 +27,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshUser = async () => {
     // Logic to refresh user... simplified for now, mainly used after profile updates
     // If logged in via Google, we use the current Firebase user.
-    // If logged in via manual (hash), we might need to store the ID in local storage or rely on session if we had one.
-    // Since we don't have a persistent session for manual login beyond this state (unless we add it),
-    // this refresh might only work fully for Google auth or if we persist manual auth.
-    // For now, let's just re-fetch if we have a user in state.
     if (user && user._id) {
          try {
             const res = await fetch(`/api/students/${user._id}`);
@@ -93,10 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
         }
       } else {
-        // Only set user to null if we are NOT manually logged in (checked via some other persistent state if we had it)
-        // For this simple implementation, we'll assume Firebase handles the "main" session.
-        // If manual login happens, it sets 'user' state directly.
-        // We need to be careful not to wipe manual login state when Firebase initializes as null.
         if (!user) { 
              setLoading(false); 
         }
@@ -105,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []); // user dependency removed to avoid loops, but be careful with manual login persistence
+  }, []);
 
   const signInWithGoogle = async () => {
     try {
@@ -141,47 +132,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const signin = async (email: string, hashKey: string) => {
-    try {
-        const res = await fetch('/api/auth/signin', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, hashKey }),
-        });
-    
-        const { success, data, message } = await res.json();
-    
-        if (success) {
-          setUser(data);
-          toast({
-            title: "Signed In",
-            description: `Welcome back, ${data.name}!`,
-          });
-          router.push('/');
-        } else {
-          toast({
-            title: "Sign In Failed",
-            description: message || 'Invalid credentials',
-            variant: "destructive"
-          });
-        }
-    } catch (error) {
-        toast({
-            title: "Error",
-            description: "An unexpected error occurred.",
-            variant: "destructive"
-        });
-    }
-  };
-
   const signup = async (userData: any) => {
     console.warn("Manual signup is deprecated/admin-only via dashboard.");
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signout, refreshUser, signin, signup }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGoogle, signout, refreshUser, signup }}>
       {children}
     </AuthContext.Provider>
   );

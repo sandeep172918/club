@@ -23,7 +23,6 @@ interface UpdateProfileDialogProps {
       shirtSize?: string;
       sport?: string;
       branch?: string;
-      hashKey?: string;
     }
   ) => void;
 }
@@ -38,7 +37,6 @@ export default function UpdateProfileDialog({
   const [shirtSize, setShirtSize] = useState(user?.shirtSize || "");
   const [sport, setSport] = useState(user?.sport || "");
   const [branch, setBranch] = useState(user?.branch || "");
-  const [hashKey, setHashKey] = useState(""); // Default empty, only update if user types
   const [isOpen, setIsOpen] = useState(false);
 
   const { toast } = useToast();
@@ -49,7 +47,6 @@ export default function UpdateProfileDialog({
       setShirtSize(user?.shirtSize || "");
       setSport(user?.sport || "");
       setBranch(user?.branch || "");
-      setHashKey(""); 
     }
   }, [isOpen, user]);
 
@@ -62,10 +59,6 @@ export default function UpdateProfileDialog({
       sport,
       branch,
     };
-
-    if (hashKey) {
-        updates.hashKey = hashKey;
-    }
 
     onUpdateProfile(updates);
     setIsOpen(false);
@@ -81,20 +74,6 @@ export default function UpdateProfileDialog({
           <DialogTitle>Update your profile</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="hashKey" className="text-right">
-              Hash Key
-            </Label>
-            <Input
-              id="hashKey"
-              type="password"
-              value={hashKey}
-              onChange={(e) => setHashKey(e.target.value)}
-              className="col-span-3"
-              placeholder="Set a new hash key (optional)"
-            />
-          </div>
 
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="favoriteLanguage" className="text-right">

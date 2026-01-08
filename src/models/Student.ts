@@ -12,10 +12,6 @@ const StudentSchema = new mongoose.Schema({
     unique: true,
     match: /.+\@iitism\.ac\.in$/,
   },
-  hashKey: {
-    type: String,
-    required: false,
-  },
   role: {
     type: String,
     enum: ['admin', 'student'],
