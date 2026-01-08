@@ -8,7 +8,7 @@ export async function GET(
   req: NextRequest,
   context: any
 ) {
-  const { params } = context;
+  const params = await context.params;
   await dbConnect();
 
   try {
@@ -29,7 +29,7 @@ export async function PUT(
   req: NextRequest,
   context: any
 ) {
-  const { params } = context;
+  const params = await context.params;
   await dbConnect();
 
   try {
@@ -113,7 +113,7 @@ export async function DELETE(
   req: NextRequest,
   context: any
 ) {
-  const { params } = context;
+  const params = await context.params;
   await dbConnect();
 
   try {

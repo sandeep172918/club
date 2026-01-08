@@ -11,17 +11,19 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import UpdateProfileDialog from "@/components/profile/update-profile-dialog";
+import VerifyCodeforcesDialog from "@/components/profile/verify-codeforces-dialog";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle } from "lucide-react";
 
 function ProfilePage() {
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
 
   const handleUpdateProfile = async (profile: {
-    codeforcesHandle?: string;
     favoriteLanguage?: string;
     shirtSize?: string;
     sport?: string;
@@ -54,16 +56,53 @@ function ProfilePage() {
     }
   };
 
+  const handleVerifyCodeforces = async (handle: string) => {
+    if (user) {
+        const res = await fetch(`/api/students/${(user as any)._id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ codeforcesHandle: handle }),
+        });
+        const result = await res.json();
+
+        if (result.success) {
+            await refreshUser();
+            toast({
+                title: "Success",
+                description: "Codeforces handle verified and linked!",
+            });
+        } else {
+            toast({
+                title: "Error",
+                description: result.error || "Failed to link handle",
+                variant: "destructive"
+            });
+        }
+    }
+  };
+
   return (
     <main className="p-4 md:p-8">
       <div className="grid gap-4">
         <Card className="col-span-4 lg:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-2xl font-bold">My Profile</CardTitle>
-            <UpdateProfileDialog
-                user={user}
-                onUpdateProfile={handleUpdateProfile}
-              />
+            <div className="flex gap-2">
+                {!user?.codeforcesHandle ? (
+                    <VerifyCodeforcesDialog onVerified={handleVerifyCodeforces} />
+                ) : (
+                    <Button variant="outline" disabled className="gap-2 cursor-default opacity-100 bg-green-50 text-green-700 border-green-200 hover:bg-green-50 hover:text-green-700">
+                        <CheckCircle className="h-4 w-4" />
+                        Codeforces Verified
+                    </Button>
+                )}
+                <UpdateProfileDialog
+                    user={user}
+                    onUpdateProfile={handleUpdateProfile}
+                />
+            </div>
           </CardHeader>
           <CardContent className="mt-4">
             <div className="flex flex-col items-center justify-center space-y-4">
