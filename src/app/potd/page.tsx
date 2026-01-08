@@ -2,12 +2,22 @@
 
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import AddPOTDDialog from "@/components/potd/add-potd-dialog";
+import ManagePOTDDialog from "@/components/potd/add-potd-dialog";
 import POTDCard from "@/components/potd/potd-card";
 import POTDLeaderboardDialog from "@/components/potd/potd-leaderboard-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function POTDPage() {
   const { user, refreshUser } = useAuth();
@@ -59,8 +69,12 @@ export default function POTDPage() {
     refreshUser();
   };
 
+  const now = new Date().getTime();
+  const activePotds = potds.filter(p => new Date(p.endTime).getTime() >= now);
+  const archivedPotds = potds.filter(p => new Date(p.endTime).getTime() < now);
+
   return (
-    <main className="p-4 md:p-8 space-y-6">
+    <main className="p-4 md:p-8 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <h1 className="text-3xl font-bold tracking-tight">Problem of the Day</h1>
@@ -68,7 +82,7 @@ export default function POTDPage() {
         </div>
         <div className="flex gap-2">
             <POTDLeaderboardDialog />
-            {isAdmin && <AddPOTDDialog onAddPOTD={handleAddPOTD} />}
+            {isAdmin && <ManagePOTDDialog onSubmit={handleAddPOTD} />}
         </div>
       </div>
 
@@ -77,22 +91,62 @@ export default function POTDPage() {
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground"/>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {potds.length > 0 ? (
-                potds.map((potd) => (
-                    <POTDCard 
-                        key={potd._id} 
-                        potd={potd} 
-                        userSolved={(user as any)?.solvedPOTDs?.includes(potd._id)}
-                        onVerify={onVerified}
-                    />
-                ))
-            ) : (
-                <div className="col-span-full text-center py-10 text-muted-foreground">
-                    No active challenges at the moment. Check back later!
+        <>
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold">Active Challenges</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {activePotds.length > 0 ? (
+                        activePotds.map((potd) => (
+                            <POTDCard 
+                                key={potd._id} 
+                                potd={potd} 
+                                userSolved={(user as any)?.solvedPOTDs?.includes(potd._id)}
+                                onRefresh={onVerified}
+                                isAdmin={isAdmin}
+                            />
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-10 text-muted-foreground">
+                            No active challenges at the moment. Check back later!
+                        </div>
+                    )}
                 </div>
+            </section>
+
+            {archivedPotds.length > 0 && (
+                <section className="space-y-4">
+                    <h2 className="text-xl font-semibold">Archive</h2>
+                    <Card>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Problem Name</TableHead>
+                                        {isAdmin && <TableHead className="text-center">Requests</TableHead>}
+                                        <TableHead className="w-[100px] text-right">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {archivedPotds.map((potd) => (
+                                        <TableRow key={potd._id}>
+                                            <TableCell className="font-medium">{potd.problemName}</TableCell>
+                                            {isAdmin && <TableCell className="text-center">{potd.editorialRequests || 0}</TableCell>}
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="sm" asChild>
+                                                    <Link href={potd.link} target="_blank">
+                                                        Solve <ExternalLink className="ml-1 h-3 w-3" />
+                                                    </Link>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </section>
             )}
-        </div>
+        </>
       )}
     </main>
   );

@@ -21,6 +21,10 @@ const POTDSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  editorialRequests: {
+    type: Number,
+    default: 0,
+  },
   solvedBy: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Student',
