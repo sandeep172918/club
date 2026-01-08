@@ -11,6 +11,8 @@ export interface Student {
   shirtSize?: string;
   sport?: string;
   branch?: string;
+  points: number;
+  solvedPOTDs?: string[];
   ratingHistory: { contestId: string; rating: number; change: number }[];
   contestParticipation: { contestId: string; participated: boolean }[];
 }

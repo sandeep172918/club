@@ -47,6 +47,13 @@ const StudentSchema = new mongoose.Schema({
   branch: {
     type: String,
   },
+  points: {
+    type: Number,
+    default: 0,
+  },
+  solvedPOTDs: [{
+    type: String, // Storing POTD IDs
+  }],
   ratingHistory: [
     {
       contestId: String,

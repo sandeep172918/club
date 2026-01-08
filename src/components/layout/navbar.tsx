@@ -13,6 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { Trophy } from "lucide-react";
 
 export default function Navbar() {
   const { user, signout } = useAuth();
@@ -21,6 +22,7 @@ export default function Navbar() {
     { href: "/", label: "Dashboard" },
     { href: "/leaderboard", label: "Leaderboard" },
     { href: "/attendance", label: "Attendance" },
+    { href: "/potd", label: "POTD" },
     { href: "/upcoming-contests", label: "Upcoming Contests" },
     { href: "/resources", label: "Resources" },
     user?.role === "admin"
@@ -48,6 +50,12 @@ export default function Navbar() {
         ))}
       </nav>
       <div className="flex items-center gap-4">
+        {user && (
+            <div className="flex items-center gap-1.5 rounded-full bg-accent/50 px-3 py-1 text-sm font-medium border border-border">
+                <Trophy className="h-4 w-4 text-yellow-500" />
+                <span>{user.points || 0} Pts</span>
+            </div>
+        )}
         <ThemeSwitcher />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

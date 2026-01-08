@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Trophy, ClipboardCheck, Users, CalendarDays, Library } from 'lucide-react';
+import { LayoutDashboard, Trophy, ClipboardCheck, Users, CalendarDays, Library, Zap } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuItem,
@@ -15,9 +15,10 @@ const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
   { href: '/attendance', label: 'Attendance', icon: ClipboardCheck },
-  { href: '/students', label: 'Students', icon: Users },
+  { href: '/potd', label: 'POTD', icon: Zap },
   { href: '/upcoming-contests', label: 'Upcoming Contests', icon: CalendarDays },
   { href: '/resources', label: 'Resources', icon: Library },
+  { href: '/students', label: 'Students', icon: Users },
 ];
 
 export function MainNav() {
