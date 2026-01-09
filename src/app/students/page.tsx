@@ -8,6 +8,7 @@ import { Student } from "@/types";
 import { Button } from "@/components/ui/button";
 import { AddStudentDialog } from "@/components/students/add-student-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useSocket } from "@/context/SocketContext";
 
 function StudentsPage() {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ function StudentsPage() {
   const [isSyncingAllStudents, setIsSyncingAllStudents] = useState(false);
   const [isAddStudentDialogOpen, setIsAddStudentDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { socket } = useSocket();
 
   // Function to update a student in the local state
   const handleStudentUpdated = useCallback((updatedStudent: Student) => {
@@ -48,6 +50,7 @@ function StudentsPage() {
       const res = await fetch("/api/students");
       const { data } = await res.json();
       setStudents(data);
+      socket?.emit('data_update', { type: 'STUDENT_UPDATED' });
       toast({
         title: "Success",
         description: "All students participation synced successfully!",
@@ -70,14 +73,28 @@ function StudentsPage() {
     }
   }, [user, router]);
 
+  const fetchStudents = async () => {
+    const res = await fetch("/api/students");
+    const { data } = await res.json();
+    setStudents(data);
+  };
+
   useEffect(() => {
-    const fetchStudents = async () => {
-      const res = await fetch("/api/students");
-      const { data } = await res.json();
-      setStudents(data);
-    };
     fetchStudents();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        if (['STUDENT_UPDATED', 'STUDENT_DELETED', 'STUDENT_ADDED'].includes(data.type)) {
+            fetchStudents();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket]);
 
   if (user?.role !== "admin") {
     return null;

@@ -5,19 +5,20 @@ import { useEffect, useState } from "react";
 import { ProcessedContestAttendance, Student } from "@/types";
 import { Button } from "@/components/ui/button"; // Import Button
 import { useAuth } from "@/context/AuthContext"; // Import useAuth
+import { useSocket } from "@/context/SocketContext";
 
 function AttendancePage() {
   const { user } = useAuth(); // Destructure user from useAuth
-  console.log("Current user:", user);
-  console.log("User role:", user?.role);
   const [attendanceData, setAttendanceData] = useState<ProcessedContestAttendance[]>([]);
   const [students, setStudents] = useState<Student[]>([]); // Keep students state for the table component
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncingContests, setSyncingContests] = useState(false);
+  const { socket } = useSocket();
 
   const fetchData = async () => {
-    setLoading(true);
+    // Keep loading mostly for first load
+    // setLoading(true); 
     setError(null);
     try {
       // Fetch attendance data (now pre-processed by API)
@@ -46,11 +47,25 @@ function AttendancePage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        if (['STUDENT_UPDATED', 'ATTENDANCE_UPDATED', 'CONTEST_ADDED'].includes(data.type)) {
+            fetchData();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket]);
+
   const handleUpdateAttendance = async () => {
     // This button now primarily triggers a refresh of the attendance data
     // The attendance API itself will fetch fresh Codeforces contests
     // The student participation updates are handled by the "Sync Students" on the Students page
     await fetchData();
+    socket?.emit('data_update', { type: 'ATTENDANCE_UPDATED' });
   };
 
 
@@ -64,6 +79,7 @@ function AttendancePage() {
       }
       // After syncing contests in the local DB, refetch attendance data to potentially show new contests
       await fetchData();
+      socket?.emit('data_update', { type: 'ATTENDANCE_UPDATED' });
     } catch (e: any) {
       setError(e.message);
     } finally {

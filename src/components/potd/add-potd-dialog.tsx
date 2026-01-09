@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
+import { useSocket } from "@/context/SocketContext";
 
 interface ManagePOTDDialogProps {
   onSubmit: (potd: any) => void;
@@ -27,6 +28,7 @@ export default function ManagePOTDDialog({ onSubmit, initialData, children }: Ma
   const [endTime, setEndTime] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { socket } = useSocket();
 
   useEffect(() => {
     if (initialData && isOpen) {
@@ -62,6 +64,7 @@ export default function ManagePOTDDialog({ onSubmit, initialData, children }: Ma
         points: Number(points),
         endTime: new Date(endTime).toISOString()
     });
+    socket?.emit('data_update', { type: 'POTD_UPDATED' });
     setIsOpen(false);
     if (!initialData) {
         // Reset form only if adding

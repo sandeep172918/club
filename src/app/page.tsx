@@ -4,7 +4,7 @@
 import { StatCard } from "@/components/dashboard/stat-card";
 // Removed unused imports: UpcomingContestsCard
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 // Removed unused imports: Contest, Student
 import { Users, TrendingUp, CalendarCheck, Code } from "lucide-react"; // Re-added TrendingUp, CalendarCheck
 
@@ -12,6 +12,7 @@ import { Users, TrendingUp, CalendarCheck, Code } from "lucide-react"; // Re-add
 import SkillDistribution from "@/components/dashboard/skill-distribution";
 import ProgressSnapshot from "@/components/dashboard/progress-snapshot";
 import EngagementMetrics from "@/components/dashboard/engagement-metrics";
+import { useSocket } from "@/context/SocketContext";
 
 interface DashboardMetrics {
   totalStudents: number;
@@ -39,26 +40,42 @@ function HomePage() {
   const [dashboardMetrics, setDashboardMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { socket } = useSocket();
+
+  const fetchDashboardMetrics = useCallback(async () => {
+    // Keep loading state mostly for initial load, or handle background refresh quietly
+    // setLoading(true); // Don't reset loading on socket updates to avoid flickering
+    try {
+      const res = await fetch("/api/dashboard-metrics");
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const { data } = await res.json();
+      setDashboardMetrics(data);
+    } catch (e: any) {
+      console.error("Fetch metrics error:", e);
+      // setError(e.message); // Don't show error on background refresh
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchDashboardMetrics = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch("/api/dashboard-metrics");
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        const { data } = await res.json();
-        setDashboardMetrics(data);
-      } catch (e: any) {
-        setError(e.message);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchDashboardMetrics();
-  }, []);
+  }, [fetchDashboardMetrics]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        if (['STUDENT_UPDATED', 'PROBLEM_ADDED', 'POTD_UPDATED', 'CONTEST_ADDED'].includes(data.type)) {
+            fetchDashboardMetrics();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket, fetchDashboardMetrics]);
 
   if (loading) {
     return <p className="p-4 md:p-8">Loading dashboard metrics...</p>;

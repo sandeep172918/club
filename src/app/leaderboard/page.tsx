@@ -6,10 +6,12 @@ import { useEffect, useState } from "react";
 import { LeaderboardEntry, Student } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useSocket } from "@/context/SocketContext";
 
 function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const { user } = useAuth();
+  const { socket } = useSocket();
 
   const fetchLeaderboard = async () => {
     const res = await fetch("/api/leaderboard");
@@ -20,6 +22,20 @@ function LeaderboardPage() {
   useEffect(() => {
     fetchLeaderboard();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        // Leaderboard depends on students (points, ratings)
+        if (['STUDENT_UPDATED', 'LEADERBOARD_UPDATED', 'PROBLEM_ADDED', 'POTD_UPDATED'].includes(data.type)) {
+            fetchLeaderboard();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket]);
 
   return (
     <main className="p-4 md:p-8">

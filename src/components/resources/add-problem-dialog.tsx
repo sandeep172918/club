@@ -20,6 +20,7 @@ import {
 import { useState } from "react";
 import { CP_TOPICS } from "@/lib/constants";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 
 interface AddProblemDialogProps {
   onAddProblem: () => void;
@@ -37,6 +38,7 @@ export default function AddProblemDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { socket } = useSocket();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +67,9 @@ export default function AddProblemDialog({
                 status
             })
         });
+        
+        socket?.emit('data_update', { type: 'PROBLEM_ADDED' });
+        
         onAddProblem();
         setIsOpen(false);
         // Reset form

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Student } from "@/types";
+import { useSocket } from "@/context/SocketContext";
 
 interface AddStudentDialogProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
   const [hashKey, setHashKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { socket } = useSocket();
 
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -66,6 +68,7 @@ export const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
 
       if (response.ok && result.success) {
         onStudentAdded(result.data);
+        socket?.emit('data_update', { type: 'STUDENT_UPDATED' });
         toast({
             title: "Student Added",
             description: `${name} has been added successfully.`,

@@ -7,6 +7,7 @@ import MainLayout from "@/components/layout/main-layout";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from "@/components/ui/toaster";
 import SupportBubble from "@/components/support-bubble";
+import { SocketProvider } from "@/context/SocketContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,9 +26,11 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
-            <MainLayout>{children}</MainLayout>
-            <SupportBubble />
-            <Toaster />
+            <SocketProvider>
+              <MainLayout>{children}</MainLayout>
+              <SupportBubble />
+              <Toaster />
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

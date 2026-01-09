@@ -15,7 +15,7 @@ export default function MainLayout({
   const pathname = usePathname();
 
   const authPages = ["/signin", "/signup"];
-  const isAuthPage = authPages.includes(pathname);
+  const isAuthPage = pathname ? authPages.includes(pathname) : false;
 
   useEffect(() => {
     if (!loading && !user && !isAuthPage) {

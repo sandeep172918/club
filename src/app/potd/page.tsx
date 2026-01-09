@@ -10,6 +10,7 @@ import { Loader2, ExternalLink, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useSocket } from "@/context/SocketContext";
 import {
   Table,
   TableBody,
@@ -24,6 +25,7 @@ export default function POTDPage() {
   const [potds, setPotds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { socket } = useSocket();
 
   const isAdmin = user?.role === 'admin' || (user?.email === 'cp.cpp.club@gmail.com'); 
 
@@ -44,6 +46,19 @@ export default function POTDPage() {
   useEffect(() => {
     fetchPOTDs();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        if (['POTD_UPDATED', 'POTD_DELETED'].includes(data.type)) {
+            fetchPOTDs();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket]);
 
   const handleAddPOTD = async (potd: any) => {
     try {
@@ -76,6 +91,7 @@ export default function POTDPage() {
           const data = await res.json();
           if (data.success) {
               toast({ title: "Deleted", description: "POTD deleted successfully" });
+              socket?.emit('data_update', { type: 'POTD_DELETED' });
               fetchPOTDs();
           } else {
               toast({ title: "Error", description: data.error, variant: "destructive" });

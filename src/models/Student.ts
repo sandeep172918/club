@@ -54,6 +54,9 @@ const StudentSchema = new mongoose.Schema({
   solvedPOTDs: [{
     type: String, // Storing POTD IDs
   }],
+  solvedResources: [{
+    type: String, // Problem IDs from Resources
+  }],
   ratingHistory: [
     {
       contestId: String,

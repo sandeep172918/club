@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { useSocket } from "@/context/SocketContext";
 
 interface AddTrickDialogProps {
   onAddTrick: () => void;
@@ -26,6 +27,7 @@ export default function AddTrickDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { socket } = useSocket();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,6 +47,7 @@ export default function AddTrickDialog({
                 status
             })
         });
+        socket?.emit('data_update', { type: 'TRICK_ADDED' });
         onAddTrick();
         setIsOpen(false);
         setTitle("");

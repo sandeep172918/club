@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronDown, ChevronRight, ExternalLink, User, Check, Trash2, Info } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ChevronDown, ChevronRight, ExternalLink, User, Check, Trash2, Info, CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
+import { useSocket } from "@/context/SocketContext";
 import {
   Tooltip,
   TooltipContent,
@@ -32,8 +33,22 @@ interface ProblemListProps {
 }
 
 export function ProblemList({ problems, onUpdate }: ProblemListProps) {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
+  const { socket } = useSocket();
   const isAdmin = user?.role === "admin";
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        if (['PROBLEM_ADDED', 'PROBLEM_UPDATED', 'PROBLEM_DELETED'].includes(data.type)) {
+            onUpdate?.();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket, onUpdate]);
 
   // Filter problems: Admins see all, Students see only approved
   const visibleProblems = problems.filter(p => isAdmin || p.status === 'approved' || !p.status);
@@ -58,6 +73,8 @@ export function ProblemList({ problems, onUpdate }: ProblemListProps) {
           categories={groupedByTopic[topic]}
           isAdmin={isAdmin}
           onUpdate={onUpdate}
+          user={user}
+          refreshUser={refreshUser}
         />
       ))}
       {topics.length === 0 && (
@@ -73,14 +90,20 @@ function TopicAccordion({
   topic,
   categories,
   isAdmin,
-  onUpdate
+  onUpdate,
+  user,
+  refreshUser
 }: {
   topic: string;
   categories: Record<string, Problem[]>;
   isAdmin: boolean;
   onUpdate?: () => void;
+  user: any;
+  refreshUser: () => Promise<void>;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [solvingIds, setSolvingIds] = useState<Set<string>>(new Set());
+  const { socket } = useSocket();
 
   const handleApprove = async (id: string) => {
     await fetch(`/api/problems/${id}`, {
@@ -88,6 +111,7 @@ function TopicAccordion({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "approved" }),
     });
+    socket?.emit('data_update', { type: 'PROBLEM_UPDATED' });
     if (onUpdate) onUpdate();
   };
 
@@ -95,7 +119,28 @@ function TopicAccordion({
       await fetch(`/api/problems/${id}`, {
           method: "DELETE",
       });
+      socket?.emit('data_update', { type: 'PROBLEM_DELETED' });
       if (onUpdate) onUpdate();
+  };
+
+  const handleToggleSolve = async (problemId: string) => {
+    if (!user?._id) return;
+    setSolvingIds(prev => new Set(prev).add(problemId));
+    try {
+        await fetch(`/api/students/${user._id}/solve`, {
+            method: 'POST',
+            body: JSON.stringify({ problemId })
+        });
+        await refreshUser();
+    } catch (e) {
+        console.error(e);
+    } finally {
+        setSolvingIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(problemId);
+            return newSet;
+        });
+    }
   };
 
 
@@ -119,7 +164,11 @@ function TopicAccordion({
                    {kind}
                  </h4>
                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                   {kindProblems.map((problem) => (
+                   {kindProblems.map((problem) => {
+                     const isSolved = user?.solvedResources?.includes(problem._id);
+                     const isSolving = solvingIds.has(problem._id);
+
+                     return (
                      <Card 
                         key={problem._id} 
                         className={`hover:bg-accent/50 transition-colors flex flex-col ${problem.status === 'pending' ? 'border-dashed border-yellow-500 bg-yellow-50/10' : ''}`}
@@ -171,11 +220,27 @@ function TopicAccordion({
                                     <User className="h-3 w-3" />
                                     <span className="truncate">{problem.contributor || "Anonymous"}</span>
                                 </div>
-                                {isAdmin && problem.status !== 'pending' && (
-                                    <button onClick={() => handleDelete(problem._id)} className="text-destructive hover:text-destructive/80 p-1">
-                                        <Trash2 className="h-3 w-3" />
-                                    </button>
-                                )}
+
+                                <div className="flex items-center gap-2">
+                                     <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`h-6 px-2 text-xs ${isSolved ? 'text-green-600' : 'text-muted-foreground'}`}
+                                        onClick={() => handleToggleSolve(problem._id)}
+                                        disabled={isSolving}
+                                    >
+                                        {isSolving ? <Loader2 className="h-3 w-3 animate-spin" /> : 
+                                          isSolved ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <Circle className="h-3 w-3 mr-1" />
+                                        }
+                                        {isSolved ? "Solved" : "Solve"}
+                                    </Button>
+
+                                    {isAdmin && problem.status !== 'pending' && (
+                                        <button onClick={() => handleDelete(problem._id)} className="text-destructive hover:text-destructive/80 p-1">
+                                            <Trash2 className="h-3 w-3" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                            
                             {/* Admin Actions for Pending */}
@@ -191,7 +256,7 @@ function TopicAccordion({
                             )}
                        </CardFooter>
                      </Card>
-                   ))}
+                   )})}
                  </div>
                </div>
              );

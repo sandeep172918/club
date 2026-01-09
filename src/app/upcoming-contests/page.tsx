@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { ClubContest } from "@/types";
 import AddClubContestDialog from "@/components/upcoming-contests/add-club-contest-dialog";
+import { useSocket } from "@/context/SocketContext";
 
 function UpcomingContestsPage() {
   const { user } = useAuth();
   const [contests, setContests] = useState<ClubContest[]>([]);
+  const { socket } = useSocket();
 
   const fetchContests = async () => {
     const res = await fetch("/api/club-contests");
@@ -20,6 +22,19 @@ function UpcomingContestsPage() {
   useEffect(() => {
     fetchContests();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        if (data.type === 'CONTEST_ADDED') {
+            fetchContests();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket]);
 
   const handleAddContest = async (contestData: {
     name: string;

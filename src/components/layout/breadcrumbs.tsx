@@ -13,10 +13,10 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export function Breadcrumbs() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const topicId = searchParams.get('topic');
+  const topicId = searchParams?.get('topic');
 
-  // Don't show breadcrumbs on the homepage
-  if (pathname === '/') {
+  // Don't show breadcrumbs on the homepage or if pathname is null
+  if (!pathname || pathname === '/') {
     return null;
   }
 

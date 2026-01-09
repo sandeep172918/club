@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { Check, Trash2, User, ShieldAlert } from "lucide-react";
 import AddTrickDialog from "@/components/resources/add-trick-dialog";
+import { useSocket } from "@/context/SocketContext";
 
 interface Trick {
   _id: string;
@@ -20,6 +21,7 @@ export function TricksList() {
   const [tricks, setTricks] = useState<Trick[]>([]);
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const { socket } = useSocket();
 
   const fetchTricks = async () => {
     // If admin, fetch all (or explicitly pending + approved). If student, fetch only approved.
@@ -36,12 +38,26 @@ export function TricksList() {
     fetchTricks();
   }, []);
 
+  useEffect(() => {
+    if (!socket) return;
+    const handleUpdate = (data: any) => {
+        if (['TRICK_ADDED', 'TRICK_UPDATED', 'TRICK_DELETED'].includes(data.type)) {
+            fetchTricks();
+        }
+    };
+    socket.on("data_update", handleUpdate);
+    return () => {
+        socket.off("data_update", handleUpdate);
+    };
+  }, [socket]);
+
   const handleApprove = async (id: string) => {
     await fetch(`/api/tricks/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "approved" }),
     });
+    socket?.emit('data_update', { type: 'TRICK_UPDATED' });
     fetchTricks();
   };
 
@@ -49,6 +65,7 @@ export function TricksList() {
     await fetch(`/api/tricks/${id}`, {
       method: "DELETE",
     });
+    socket?.emit('data_update', { type: 'TRICK_DELETED' });
     fetchTricks();
   };
 

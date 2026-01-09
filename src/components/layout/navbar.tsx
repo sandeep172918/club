@@ -13,10 +13,16 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "../ui/button";
 import { ThemeSwitcher } from "./ThemeSwitcher";
-import { Trophy } from "lucide-react";
+import { Trophy, RefreshCw, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useSocket } from "@/context/SocketContext";
 
 export default function Navbar() {
-  const { user, signout } = useAuth();
+  const { user, signout, refreshUser } = useAuth();
+  const { toast } = useToast();
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { socket } = useSocket();
 
   const navItems = [
     { href: "/", label: "Dashboard" },
@@ -29,6 +35,37 @@ export default function Navbar() {
       ? { href: "/students", label: "Students" }
       : { href: "/profile", label: "Profile" },
   ];
+
+  const handleSync = async () => {
+    if (!user?._id) return;
+    setIsSyncing(true);
+    try {
+        const res = await fetch(`/api/students/${user._id}/update-participation`, { method: "POST" });
+        if (res.ok) {
+            await refreshUser();
+            // Removed socket emit to keep sync private/individual
+            toast({
+                title: "Synced",
+                description: "Your Codeforces data has been updated.",
+            });
+        } else {
+             toast({
+                title: "Sync Failed",
+                description: "Could not sync data. Try again later.",
+                variant: "destructive"
+            });
+        }
+    } catch (error) {
+        console.error("Sync error", error);
+         toast({
+            title: "Error",
+            description: "Something went wrong.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsSyncing(false);
+    }
+  };
 
   return (
     <header className="flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
@@ -51,10 +88,25 @@ export default function Navbar() {
       </nav>
       <div className="flex items-center gap-4">
         {user && (
-            <div className="flex items-center gap-1.5 rounded-full bg-accent/50 px-3 py-1 text-sm font-medium border border-border">
-                <Trophy className="h-4 w-4 text-yellow-500" />
-                <span>{user.points || 0} Pts</span>
-            </div>
+            <>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleSync} 
+                    disabled={isSyncing}
+                    title="Sync Codeforces Data"
+                >
+                    {isSyncing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <RefreshCw className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                    )}
+                </Button>
+                <div className="flex items-center gap-1.5 rounded-full bg-accent/50 px-3 py-1 text-sm font-medium border border-border">
+                    <Trophy className="h-4 w-4 text-yellow-500" />
+                    <span>{user.points || 0} Pts</span>
+                </div>
+            </>
         )}
         <ThemeSwitcher />
         <DropdownMenu>
