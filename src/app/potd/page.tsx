@@ -6,7 +6,7 @@ import ManagePOTDDialog from "@/components/potd/add-potd-dialog";
 import POTDCard from "@/components/potd/potd-card";
 import POTDLeaderboardDialog from "@/components/potd/potd-leaderboard-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -69,6 +69,22 @@ export default function POTDPage() {
     refreshUser();
   };
 
+  const handleDeletePOTD = async (id: string) => {
+      if (!confirm("Are you sure you want to delete this archived problem?")) return;
+      try {
+          const res = await fetch(`/api/potd/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+              toast({ title: "Deleted", description: "POTD deleted successfully" });
+              fetchPOTDs();
+          } else {
+              toast({ title: "Error", description: data.error, variant: "destructive" });
+          }
+      } catch (error) {
+          toast({ title: "Error", description: "Failed to delete", variant: "destructive" });
+      }
+  };
+
   const now = new Date().getTime();
   const activePotds = potds.filter(p => new Date(p.endTime).getTime() >= now);
   const archivedPotds = potds.filter(p => new Date(p.endTime).getTime() < now);
@@ -123,7 +139,7 @@ export default function POTDPage() {
                                     <TableRow>
                                         <TableHead>Problem Name</TableHead>
                                         {isAdmin && <TableHead className="text-center">Requests</TableHead>}
-                                        <TableHead className="w-[100px] text-right">Action</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -132,11 +148,23 @@ export default function POTDPage() {
                                             <TableCell className="font-medium">{potd.problemName}</TableCell>
                                             {isAdmin && <TableCell className="text-center">{potd.editorialRequests || 0}</TableCell>}
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="sm" asChild>
-                                                    <Link href={potd.link} target="_blank">
-                                                        Solve <ExternalLink className="ml-1 h-3 w-3" />
-                                                    </Link>
-                                                </Button>
+                                                <div className="flex justify-end items-center gap-2">
+                                                    <Button variant="ghost" size="sm" asChild>
+                                                        <Link href={potd.link} target="_blank">
+                                                            Solve <ExternalLink className="ml-1 h-3 w-3" />
+                                                        </Link>
+                                                    </Button>
+                                                    {isAdmin && (
+                                                        <Button 
+                                                            variant="ghost" 
+                                                            size="icon" 
+                                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                            onClick={() => handleDeletePOTD(potd._id)}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}
