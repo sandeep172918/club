@@ -1,5 +1,5 @@
 //Author: sandeep172918
-//Date: 2026-01-08 22:49
+//Date: 2025-12-17 13:43
 
 #include <bits/stdc++.h>
 #include <ext/pb_ds/assoc_container.hpp>
@@ -40,65 +40,45 @@ const int MOD=1e9+7;
 using namespace __gnu_pbds;
 template <typename T>
 using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
- void bfs(lli s,vector<vector<lli>>&adj,vector<bool>&used,vector<lli>&dist,vector<lli>&par){
-queue<lli>q;
-q.push(s);
-used[s] = true;
-par[s] = -1;
-while (!q.empty()) {
-    lli v = q.front();
-    q.pop();
-    for (lli u : adj[v]) {
-        if (!used[u]) {
-            used[u] = true;
-            q.push(u);
-            dist[u] = dist[v] + 1;
-            par[u] = v;
+ 
+vll get_d(lli x){
+    vll temp;
+    for(lli i=1;i*i<=x;i++){
+        if(x%i==0){
+            temp.psb(i);
+            if(i*i!=x)temp.psb(x/i);
+        }
+    }
+    srt(temp);
+    return temp;
+}
+void solve(){
+lli w,h,d;cin>>w>>h>>d;
+lli n;cin>>n;
+n=(__int128)n;
+vll ww=get_d(w);
+vll hh=get_d(h);
+vll dd=get_d(d);
+__int128 cc=w*h*d;
+for (auto i :ww) {
+    for (auto j :hh) {
+        __int128 prod = (__int128)i * j * n;
+        if (cc % prod != 0) continue;
+
+        lli k = cc / prod;
+        if (d % k == 0) {
+            cout << (w/i - 1) << " "<< (h/j - 1) << " " << (d/k - 1) << "\n";
+            return;
         }
     }
 }
-}
-void solve(){
-lli n,k;cin>>n>>k;
-//get(v,n);
-vvll adj(n);
-vll dist(n,0);
-vector<bool>used(n,false);
-vector<lli>par(n,0);
-iota(all(par),0);
-
-bfs(0,adj,used,dist,par);
-
-map<lli,lli>mp;
-fr(i,n){
-    mp[dist[i]]++;
-}
-auto it=mp.begin();
-
-auto itt=next(it);
-
-if(itt==mp.end()){
-    cout<<"1\n";
-    return;
-}
-lli ans=0;
-while(itt!=mp.end()){
-
- if(it->ss>1)ans=max(ans,itt->ss);
- else   ans=max(ans,itt->ss+1);
- it=itt;
- itt=next(itt);
-}
-
-cout<<ans<<'\n';
-
+no1;
 
 }
 
 int32_t main(){
 fastio;
 lli test=1;
-cin>>test;
 while(test--){
 solve();
 }

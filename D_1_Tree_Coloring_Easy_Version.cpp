@@ -59,19 +59,29 @@ while (!q.empty()) {
 }
 }
 void solve(){
-lli n,k;cin>>n>>k;
+lli n,k;cin>>n;
 //get(v,n);
 vvll adj(n);
+vll ch(n);
+fr(i,n-1){
+ lli u,v;cin>>u>>v;
+ adj[u-1].psb(v-1);
+ adj[v-1].psb(u-1);
+ ch[v-1]++;
+ ch[u-1]++;
+}
+
 vll dist(n,0);
 vector<bool>used(n,false);
 vector<lli>par(n,0);
 iota(all(par),0);
 
+
 bfs(0,adj,used,dist,par);
 
-map<lli,lli>mp;
+map<lli,vll>mp;
 fr(i,n){
-    mp[dist[i]]++;
+    mp[dist[i]].psb(i);
 }
 auto it=mp.begin();
 
@@ -84,8 +94,15 @@ if(itt==mp.end()){
 lli ans=0;
 while(itt!=mp.end()){
 
- if(it->ss>1)ans=max(ans,itt->ss);
- else   ans=max(ans,itt->ss+1);
+    lli p=par[(lli)itt->second.back()];
+    lli cnt=ch[p];
+    if(p)cnt--;
+    if(cnt==(lli)itt->second.size()){
+        ans=max(ans,(lli)itt->second.size()+1);
+    }else{
+        ans=max(ans,(lli)itt->second.size());
+    }
+ 
  it=itt;
  itt=next(itt);
 }

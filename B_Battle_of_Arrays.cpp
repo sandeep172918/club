@@ -1,5 +1,5 @@
 //Author: sandeep172918
-//Date: 2026-01-08 22:49
+//Date: 2025-12-17 14:39
 
 #include <bits/stdc++.h>
 #include <ext/pb_ds/assoc_container.hpp>
@@ -40,58 +40,44 @@ const int MOD=1e9+7;
 using namespace __gnu_pbds;
 template <typename T>
 using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
- void bfs(lli s,vector<vector<lli>>&adj,vector<bool>&used,vector<lli>&dist,vector<lli>&par){
-queue<lli>q;
-q.push(s);
-used[s] = true;
-par[s] = -1;
-while (!q.empty()) {
-    lli v = q.front();
-    q.pop();
-    for (lli u : adj[v]) {
-        if (!used[u]) {
-            used[u] = true;
-            q.push(u);
-            dist[u] = dist[v] + 1;
-            par[u] = v;
-        }
-    }
-}
-}
+ 
 void solve(){
-lli n,k;cin>>n>>k;
-//get(v,n);
-vvll adj(n);
-vll dist(n,0);
-vector<bool>used(n,false);
-vector<lli>par(n,0);
-iota(all(par),0);
-
-bfs(0,adj,used,dist,par);
-
-map<lli,lli>mp;
+lli n,k,x,y;cin>>n>>k;
+multiset<lli>a,b;
 fr(i,n){
-    mp[dist[i]]++;
+    cin>>x;a.insert(x);
 }
-auto it=mp.begin();
-
-auto itt=next(it);
-
-if(itt==mp.end()){
-    cout<<"1\n";
-    return;
+fr(i,k){
+    cin>>x;b.insert(x);
 }
-lli ans=0;
-while(itt!=mp.end()){
+bool bol=true;
+while(a.size()  && b.size()){
+ if(bol){
+   x=*a.rbegin();
+ 
+   y=*b.begin();
+   b.erase(y);
+   if(y>x){
+    b.insert(y-x);
+   }
+ //  cout<<"A "<<x<<' '<<y<<'\n';
+ }else{
+    x=*b.rbegin();
+   
+    y=*a.begin();
+    a.erase(y);
+    if(y>x){
+     a.insert(y-x);
+    }
+  // cout<<"B "<<x<<' '<<y<<'\n';
+    
 
- if(it->ss>1)ans=max(ans,itt->ss);
- else   ans=max(ans,itt->ss+1);
- it=itt;
- itt=next(itt);
+ }
+ bol=!bol;
 }
-
-cout<<ans<<'\n';
-
+if(a.size()){
+    cout<<"Alice\n";
+}else cout<<"Bob\n";
 
 }
 
@@ -103,3 +89,6 @@ while(test--){
 solve();
 }
 }
+
+
+

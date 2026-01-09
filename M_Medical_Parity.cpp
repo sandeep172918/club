@@ -1,5 +1,5 @@
 //Author: sandeep172918
-//Date: 2026-01-08 22:49
+//Date: 2025-12-17 15:14
 
 #include <bits/stdc++.h>
 #include <ext/pb_ds/assoc_container.hpp>
@@ -40,58 +40,33 @@ const int MOD=1e9+7;
 using namespace __gnu_pbds;
 template <typename T>
 using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update>;
- void bfs(lli s,vector<vector<lli>>&adj,vector<bool>&used,vector<lli>&dist,vector<lli>&par){
-queue<lli>q;
-q.push(s);
-used[s] = true;
-par[s] = -1;
-while (!q.empty()) {
-    lli v = q.front();
-    q.pop();
-    for (lli u : adj[v]) {
-        if (!used[u]) {
-            used[u] = true;
-            q.push(u);
-            dist[u] = dist[v] + 1;
-            par[u] = v;
-        }
-    }
-}
-}
+ 
 void solve(){
-lli n,k;cin>>n>>k;
-//get(v,n);
-vvll adj(n);
-vll dist(n,0);
-vector<bool>used(n,false);
-vector<lli>par(n,0);
-iota(all(par),0);
-
-bfs(0,adj,used,dist,par);
-
-map<lli,lli>mp;
+string aa,bb;cin>>aa>>bb;
+lli n=aa.size();
+vll a(n),b(n);
 fr(i,n){
-    mp[dist[i]]++;
+    a[i]=aa[i]-'0';
+    b[i]=bb[i]-'0';
 }
-auto it=mp.begin();
-
-auto itt=next(it);
-
-if(itt==mp.end()){
-    cout<<"1\n";
-    return;
+vvll dp(n,vll(2,1e18));
+dp[0][1]=0;
+dp[0][0]=0;
+fr(i,2){
+    if(i!=a[0])dp[0][i]++;
+    if(i!=b[0])dp[0][i]++;
 }
-lli ans=0;
-while(itt!=mp.end()){
-
- if(it->ss>1)ans=max(ans,itt->ss);
- else   ans=max(ans,itt->ss+1);
- it=itt;
- itt=next(itt);
+frs(i,1,n-1){
+ fr(prev,2){
+    fr(curr,2){
+        lli c=dp[i-1][prev];
+        if(curr!=b[i])c++;
+        if((curr^prev) != a[i])c++;
+        dp[i][curr]=min(dp[i][curr],c);
+    }
+ }
 }
-
-cout<<ans<<'\n';
-
+cout<<min(dp[n-1][0],dp[n-1][1])<<'\n';
 
 }
 
