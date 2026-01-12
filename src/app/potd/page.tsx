@@ -159,31 +159,45 @@ export default function POTDPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {archivedPotds.map((potd) => (
-                                        <TableRow key={potd._id}>
-                                            <TableCell className="font-medium">{potd.problemName}</TableCell>
-                                            {isAdmin && <TableCell className="text-center">{potd.editorialRequests || 0}</TableCell>}
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end items-center gap-2">
-                                                    <Button variant="ghost" size="sm" asChild>
-                                                        <Link href={potd.link} target="_blank">
-                                                            Solve <ExternalLink className="ml-1 h-3 w-3" />
-                                                        </Link>
-                                                    </Button>
-                                                    {isAdmin && (
-                                                        <Button 
-                                                            variant="ghost" 
-                                                            size="icon" 
-                                                            className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                            onClick={() => handleDeletePOTD(potd._id)}
-                                                        >
-                                                            <Trash2 className="h-4 w-4" />
+                                    {archivedPotds.map((potd) => {
+                                        const isSolved = (user as any)?.solvedPOTDs?.includes(potd._id);
+                                        return (
+                                            <TableRow 
+                                                key={potd._id}
+                                                className={isSolved 
+                                                    ? "bg-green-50/50 hover:bg-green-100/50 dark:bg-green-900/10 dark:hover:bg-green-900/20 border-l-4 border-l-green-500 data-[state=selected]:bg-green-100" 
+                                                    : "bg-yellow-50/50 hover:bg-yellow-100/50 dark:bg-yellow-900/10 dark:hover:bg-yellow-900/20 border-l-4 border-l-yellow-500 data-[state=selected]:bg-yellow-100"
+                                                }
+                                            >
+                                                <TableCell className="font-medium">
+                                                    <div className="flex items-center gap-2">
+                                                        {potd.problemName}
+                                                        {isSolved && <span className="text-xs px-2 py-0.5 rounded-full bg-green-200 text-green-800 dark:bg-green-800 dark:text-green-200">Solved</span>}
+                                                    </div>
+                                                </TableCell>
+                                                {isAdmin && <TableCell className="text-center">{potd.editorialRequests || 0}</TableCell>}
+                                                <TableCell className="text-right">
+                                                    <div className="flex justify-end items-center gap-2">
+                                                        <Button variant="ghost" size="sm" asChild>
+                                                            <Link href={potd.link} target="_blank">
+                                                                Solve <ExternalLink className="ml-1 h-3 w-3" />
+                                                            </Link>
                                                         </Button>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                                        {isAdmin && (
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="icon" 
+                                                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                onClick={() => handleDeletePOTD(potd._id)}
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </CardContent>

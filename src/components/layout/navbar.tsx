@@ -17,6 +17,7 @@ import { Trophy, RefreshCw, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useSocket } from "@/context/SocketContext";
+import { NotificationPopover } from "@/components/layout/notification-popover";
 
 export default function Navbar() {
   const { user, signout, refreshUser } = useAuth();
@@ -74,7 +75,7 @@ export default function Navbar() {
           href="/"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
-          C3
+          CP.cpp
         </Link>
         {navItems.map((item) => (
           <Link
@@ -106,6 +107,7 @@ export default function Navbar() {
                     <Trophy className="h-4 w-4 text-yellow-500" />
                     <span>{user.points || 0} Pts</span>
                 </div>
+                <NotificationPopover />
             </>
         )}
         <ThemeSwitcher />

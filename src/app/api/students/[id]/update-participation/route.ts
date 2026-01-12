@@ -9,7 +9,7 @@ export async function POST(
   req: NextRequest,
   context: any // Temporary workaround for type error
 ) {
-  const { params } = context;
+  const params = await context.params;
   await dbConnect();
 
   try {
