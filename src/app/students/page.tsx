@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { AddStudentDialog } from "@/components/students/add-student-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useSocket } from "@/context/SocketContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function StudentsPage() {
   const { user } = useAuth();
@@ -16,6 +23,7 @@ function StudentsPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [isSyncingAllStudents, setIsSyncingAllStudents] = useState(false);
   const [isAddStudentDialogOpen, setIsAddStudentDialogOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState("All");
   const { toast } = useToast();
   const { socket } = useSocket();
 
@@ -96,6 +104,12 @@ function StudentsPage() {
     };
   }, [socket]);
 
+  const filteredStudents = students.filter((student) => {
+    if (selectedYear === "All") return true;
+    const regex = new RegExp(`^${selectedYear}.*@iitism\\.ac\\.in$`);
+    return regex.test(student.email);
+  });
+
   if (user?.role !== "admin") {
     return null;
   }
@@ -111,20 +125,39 @@ function StudentsPage() {
             Add, edit, or remove student profiles.
           </p>
         </div>
-        <div className="mt-4 flex gap-4 md:mt-0 md:ml-4">
-          <Button onClick={() => setIsAddStudentDialogOpen(true)} variant="secondary">
-             Add Student
-          </Button>
-          <Button
-            onClick={handleSyncAllStudents}
-            disabled={isSyncingAllStudents}
-          >
-            {isSyncingAllStudents ? "Syncing All..." : "Sync All Students"}
-          </Button>
+        <div className="mt-4 flex flex-col md:flex-row gap-4 md:mt-0 md:ml-4 items-end md:items-center">
+          <div className="w-[180px]">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Years</SelectItem>
+                <SelectItem value="22">2022</SelectItem>
+                <SelectItem value="23">2023</SelectItem>
+                <SelectItem value="24">2024</SelectItem>
+                <SelectItem value="25">2025</SelectItem>
+                <SelectItem value="26">2026</SelectItem>
+                <SelectItem value="27">2027</SelectItem>
+                <SelectItem value="28">2028</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-4">
+            <Button onClick={() => setIsAddStudentDialogOpen(true)} variant="secondary">
+               Add Student
+            </Button>
+            <Button
+              onClick={handleSyncAllStudents}
+              disabled={isSyncingAllStudents}
+            >
+              {isSyncingAllStudents ? "Syncing All..." : "Sync All Students"}
+            </Button>
+          </div>
         </div>
       </div>
       <StudentList
-        students={students}
+        students={filteredStudents}
         onStudentUpdated={handleStudentUpdated}
         onStudentDeleted={handleStudentDeleted}
       />

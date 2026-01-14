@@ -63,6 +63,7 @@ export default function StudentList({ students, onStudentUpdated, onStudentDelet
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Email ID</TableHead>
                 <TableHead>Codeforces Handle</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -78,6 +79,9 @@ export default function StudentList({ students, onStudentUpdated, onStudentDelet
                       </Avatar>
                       <span className="font-medium">{student.name}</span>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {student.email}
                   </TableCell>
                   <TableCell>
                     {student.codeforcesHandle ? (

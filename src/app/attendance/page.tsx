@@ -6,11 +6,19 @@ import { ProcessedContestAttendance, Student } from "@/types";
 import { Button } from "@/components/ui/button"; // Import Button
 import { useAuth } from "@/context/AuthContext"; // Import useAuth
 import { useSocket } from "@/context/SocketContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function AttendancePage() {
   const { user } = useAuth(); // Destructure user from useAuth
   const [attendanceData, setAttendanceData] = useState<ProcessedContestAttendance[]>([]);
   const [students, setStudents] = useState<Student[]>([]); // Keep students state for the table component
+  const [selectedYear, setSelectedYear] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [syncingContests, setSyncingContests] = useState(false);
@@ -87,6 +95,11 @@ function AttendancePage() {
     }
   };
 
+  const filteredStudents = students.filter((student) => {
+    if (selectedYear === "All") return true;
+    const regex = new RegExp(`^${selectedYear}.*@iitism\\.ac\\.in$`);
+    return regex.test(student.email);
+  });
 
   if (loading) return <p>Loading attendance data...</p>;
   if (error) return <p>Error: {error}</p>;
@@ -104,21 +117,40 @@ function AttendancePage() {
             Monitor participation in recent contests.
           </p>
         </div>
-        {user?.role === "admin" && (
-          <div className="mt-4 flex md:mt-0 md:ml-4 space-x-2">
-            <Button onClick={handleUpdateAttendance}>Update Attendance</Button>
-            {user?.role === "admin" && (
-              <Button
-                onClick={handleSyncContests}
-                disabled={syncingContests}
-              >
-                {syncingContests ? "Syncing..." : "Sync Contests"}
-              </Button>
-            )}
+        <div className="flex flex-col md:flex-row items-end md:items-center gap-4 mt-4 md:mt-0">
+          <div className="w-[180px]">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by Year" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Years</SelectItem>
+                <SelectItem value="22">2022</SelectItem>
+                <SelectItem value="23">2023</SelectItem>
+                <SelectItem value="24">2024</SelectItem>
+                <SelectItem value="25">2025</SelectItem>
+                <SelectItem value="26">2026</SelectItem>
+                <SelectItem value="27">2027</SelectItem>
+                <SelectItem value="28">2028</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        )}
+          {user?.role === "admin" && (
+            <div className="flex space-x-2">
+              <Button onClick={handleUpdateAttendance}>Update Attendance</Button>
+              {user?.role === "admin" && (
+                <Button
+                  onClick={handleSyncContests}
+                  disabled={syncingContests}
+                >
+                  {syncingContests ? "Syncing..." : "Sync Contests"}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-      <AttendanceTable attendanceData={attendanceData} students={students} />
+      <AttendanceTable attendanceData={attendanceData} students={filteredStudents} />
     </main>
   );
 }
