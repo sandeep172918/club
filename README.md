@@ -6,18 +6,18 @@
 
 - **Interactive Dashboard**: Get a real-time snapshot of your club's health with metrics like Total Students, Problems Solved, Skill Distribution, and Engagement stats.
 - **Real-time Updates**: Powered by **Socket.io**, changes in attendance, leaderboards, and problem sets are reflected instantly across all connected clients.
-- **Problem of the Day (POTD)**: Engage students with daily coding challenges complete with dedicated leaderboards and streak tracking.
+- **Problem of the Day (POTD)**: Engage students with daily coding challenges complete with dedicated leaderboards and streak tracking. Includes **year-wise filtering** to see standings within specific batches.
 - **Student Management**: Efficient ways to add, update, and manage club members, including profile syncing with **Codeforces**.
 - **Contest Tracking**:
     - **Club Contests**: Manage internal contests.
     - **External Contests**: Track participation and performance in global platforms.
-- **Leaderboard**: Dynamic, real-time leaderboards to foster healthy competition among students.
+- **Leaderboard**: Dynamic, real-time leaderboards to foster healthy competition among students. Features **year-wise filtering** (e.g., filter by 2024, 2025 batch) based on student emails.
 - **Attendance System**: Digital attendance tracking for club meetings and events with live status updates.
 - **Resource Hub**:
     - **Practice**: Curated problem lists.
     - **Tricks**: A collection of competitive programming tricks and tips.
     - **Theory**: Educational materials.
-- **Authentication**: Secure user access management.
+- **Authentication**: Secure Google Sign-In via Firebase, restricted to institute emails (`@iitism.ac.in`). The system automatically detects the student's admission year based on their email prefix.
 
 ## 🛠️ Tech Stack
 
@@ -74,7 +74,7 @@
 
 ## 📜 Scripts
 
-- `pnpm dev`: Starts the Next.js development server with Turbopack (Port 9002).
+- `pnpm dev`: Starts the Next.js development server with Turbopack.
 - `pnpm build`: Builds the application for production.
 - `pnpm start`: Starts the production server.
 - `pnpm lint`: Runs ESLint to check for code quality issues.

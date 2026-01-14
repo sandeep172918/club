@@ -19,22 +19,30 @@ import {
 import { Trophy, Medal, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function POTDLeaderboardDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedYear, setSelectedYear] = useState("All");
 
   useEffect(() => {
     if (isOpen) {
         fetchLeaderboard();
     }
-  }, [isOpen]);
+  }, [isOpen, selectedYear]);
 
   const fetchLeaderboard = async () => {
     setLoading(true);
     try {
-        const res = await fetch('/api/potd/leaderboard');
+        const res = await fetch(`/api/potd/leaderboard?year=${selectedYear}`);
         const data = await res.json();
         if (data.success) {
             setLeaderboard(data.data);
@@ -64,11 +72,28 @@ export default function POTDLeaderboardDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-        <DialogHeader>
+        <DialogHeader className="flex flex-row items-center justify-between pr-8">
           <DialogTitle className="flex items-center gap-2">
             <Trophy className="h-6 w-6 text-yellow-500" />
             POTD Champions
           </DialogTitle>
+          <div className="w-[140px]">
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="h-8">
+                    <SelectValue placeholder="Year" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="All">All Years</SelectItem>
+                    <SelectItem value="22">2022</SelectItem>
+                    <SelectItem value="23">2023</SelectItem>
+                    <SelectItem value="24">2024</SelectItem>
+                    <SelectItem value="25">2025</SelectItem>
+                    <SelectItem value="26">2026</SelectItem>
+                    <SelectItem value="27">2027</SelectItem>
+                    <SelectItem value="28">2028</SelectItem>
+                </SelectContent>
+            </Select>
+          </div>
         </DialogHeader>
         
         {loading ? (
@@ -76,7 +101,7 @@ export default function POTDLeaderboardDialog() {
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
              </div>
         ) : (
-            <div className="overflow-y-auto flex-1">
+            <div className="overflow-y-auto flex-1 mt-4">
                 <Table>
                     <TableHeader>
                         <TableRow>

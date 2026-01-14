@@ -7,21 +7,29 @@ import { LeaderboardEntry, Student } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { useSocket } from "@/context/SocketContext";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [selectedYear, setSelectedYear] = useState("All");
   const { user } = useAuth();
   const { socket } = useSocket();
 
   const fetchLeaderboard = async () => {
-    const res = await fetch("/api/leaderboard");
+    const res = await fetch(`/api/leaderboard?year=${selectedYear}`);
     const { data } = await res.json();
     setLeaderboard(data);
   };
 
   useEffect(() => {
     fetchLeaderboard();
-  }, []);
+  }, [selectedYear]);
 
   useEffect(() => {
     if (!socket) return;
@@ -35,7 +43,7 @@ function LeaderboardPage() {
     return () => {
         socket.off("data_update", handleUpdate);
     };
-  }, [socket]);
+  }, [socket, selectedYear]);
 
   return (
     <main className="p-4 md:p-8">
@@ -47,6 +55,23 @@ function LeaderboardPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             See where you and your peers stand.
           </p>
+        </div>
+        <div className="w-[180px]">
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Years</SelectItem>
+              <SelectItem value="22">2022</SelectItem>
+              <SelectItem value="23">2023</SelectItem>
+              <SelectItem value="24">2024</SelectItem>
+              <SelectItem value="25">2025</SelectItem>
+              <SelectItem value="26">2026</SelectItem>
+              <SelectItem value="27">2027</SelectItem>
+              <SelectItem value="28">2028</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <LeaderboardTable leaderboard={leaderboard} />

@@ -1,13 +1,22 @@
 
 import dbConnect from '@/lib/db';
 import Student from '@/models/Student';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   await dbConnect();
 
   try {
-    const students = await Student.find({ codeforcesHandle: { $exists: true, $ne: null } }).sort({ currentRating: -1 });
+    const { searchParams } = new URL(req.url);
+    const year = searchParams.get('year');
+
+    const query: any = { codeforcesHandle: { $exists: true, $ne: null } };
+
+    if (year && year !== 'All') {
+        query.email = { $regex: new RegExp(`^${year}.*@iitism\\.ac\\.in$`) };
+    }
+
+    const students = await Student.find(query).sort({ currentRating: -1 });
     const leaderboard = students.map((student, index) => {
       const ratingHistory = student.ratingHistory;
       let lastContestRatingChange = 0;
