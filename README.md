@@ -21,15 +21,15 @@
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js](https://nextjs.org/) (App Router)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: [MongoDB](https://www.mongodb.com/) (via [Mongoose](https://mongoosejs.com/))
+- **Authentication**: [Firebase Auth](https://firebase.google.com/docs/auth)
 - **Real-time Engine**: [Socket.io](https://socket.io/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **UI Components**: [Radix UI](https://www.radix-ui.com/) (Primitives), [Lucide React](https://lucide.dev/) (Icons)
+- **Component Library**: [shadcn/ui](https://ui.shadcn.com/) (built on [Radix UI](https://www.radix-ui.com/) & [Lucide React](https://lucide.dev/))
 - **Charts**: [Recharts](https://recharts.org/)
 - **Animations**: [GSAP](https://gsap.com/)
-- **Database**: [MongoDB](https://www.mongodb.com/) (via [Mongoose](https://mongoosejs.com/))
-- **Authentication**: [Firebase](https://firebase.google.com/)
 - **AI Integration**: [Genkit](https://firebase.google.com/docs/genkit)
 - **Forms**: [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/)
 
@@ -46,7 +46,7 @@
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/your-username/your-repo-name.git
    cd cp.cpp
    ```
 
@@ -56,25 +56,22 @@
    ```
 
 3. **Environment Setup:**
-   Create a `.env.local` file in the root directory and add your environment variables (MongoDB URI, Firebase config, etc.).
-
-   ```env
-   # Example variables (adjust based on actual usage)
-   MONGODB_URI=...
-   NEXT_PUBLIC_FIREBASE_API_KEY=...
-   # ... other required keys
+   Create a `.env.local` file by copying the example file. Then, add your environment variables.
+   ```bash
+   cp .env.example .env.local
    ```
+   Now, fill in the values in `.env.local`.
 
 4. **Run the development server:**
    ```bash
    pnpm dev
    ```
 
-   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+   Open [http://localhost:9002](http://localhost:9002) with your browser to see the result.
 
 ## 📜 Scripts
 
-- `pnpm dev`: Starts the Next.js development server with Turbopack.
+- `pnpm dev`: Starts the Next.js development server with Turbopack on port 9002.
 - `pnpm build`: Builds the application for production.
 - `pnpm start`: Starts the production server.
 - `pnpm lint`: Runs ESLint to check for code quality issues.
