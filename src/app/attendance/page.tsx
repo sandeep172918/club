@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import DecryptedText from "@/components/ui/decrypted-text";
 
 function AttendancePage() {
   const { user } = useAuth(); // Destructure user from useAuth
@@ -110,9 +111,12 @@ function AttendancePage() {
     <main className="p-4 md:p-8">
       <div className="mb-6 md:flex md:items-center md:justify-between">
         <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:truncate sm:text-4xl">
-            Attendance Tracker
-          </h1>
+          <DecryptedText
+            text="Attendance Tracker"
+            animateOn="view"
+            speed={100}
+            className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:truncate sm:text-4xl"
+          />
           <p className="mt-2 text-sm text-muted-foreground">
             Monitor participation in recent contests.
           </p>
@@ -137,7 +141,6 @@ function AttendancePage() {
           </div>
           {user?.role === "admin" && (
             <div className="flex space-x-2">
-              <Button onClick={handleUpdateAttendance}>Update Attendance</Button>
               {user?.role === "admin" && (
                 <Button
                   onClick={handleSyncContests}

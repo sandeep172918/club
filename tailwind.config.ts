@@ -8,10 +8,13 @@ const config: Config = {
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
-  	extend: {
-  		gridTemplateColumns: {
-  			'13': 'repeat(13, minmax(0, 1fr))'
-  		},
+    extend: {
+      fontFamily: {
+        'jetbrains-mono': ['"JetBrains Mono"', 'monospace'],
+      },
+      gridTemplateColumns: {
+        '13': 'repeat(13, minmax(0, 1fr))'
+      },
   		colors: {
   			border: 'hsl(var(--border))',
   			input: 'hsl(var(--input))',

@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { ClubContest } from "@/types";
 import AddClubContestDialog from "@/components/upcoming-contests/add-club-contest-dialog";
 import { useSocket } from "@/context/SocketContext";
+import DecryptedText from "@/components/ui/decrypted-text";
 
 function UpcomingContestsPage() {
   const { user } = useAuth();
@@ -56,9 +57,12 @@ function UpcomingContestsPage() {
     <main className="p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
         <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:truncate sm:text-4xl">
-            Upcoming Club Contests
-          </h1>
+          <DecryptedText
+            text="Upcoming Club Contests"
+            animateOn="view"
+            speed={100}
+            className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:truncate sm:text-4xl"
+          />
           <p className="mt-2 text-sm text-muted-foreground">
             Contests organized by your club.
           </p>

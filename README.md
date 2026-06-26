@@ -17,7 +17,7 @@
     - **Practice**: Curated problem lists.
     - **Tricks**: A collection of competitive programming tricks and tips.
     - **Theory**: Educational materials.
-- **Authentication**: Secure Google Sign-In via Firebase, restricted to institute emails (`@iitism.ac.in`). The system automatically detects the student's admission year based on their email prefix.
+- **Authentication**: Secure Google Sign-In via Firebase.
 
 ## 🛠️ Tech Stack
 

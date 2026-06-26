@@ -10,9 +10,6 @@ export async function POST(req: Request) {
   try {
     const { name, email } = await req.json();
 
-    if (!email.endsWith('@iitism.ac.in')) {
-        return NextResponse.json({ success: false, message: 'Only @iitism.ac.in emails are allowed.' }, { status: 403 });
-    }
 
     let student = await Student.findOne({ email });
 

@@ -44,17 +44,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        if (!firebaseUser.email?.endsWith("@iitism.ac.in")) {
-            await firebaseSignOut(auth);
-            setUser(null);
-            setLoading(false);
-            toast({
-                title: "Access Denied",
-                description: "Only @iitism.ac.in emails are allowed.",
-                variant: "destructive"
-            });
-            return;
-        }
 
         // Sync with backend
         try {
@@ -102,15 +91,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      if (!user.email?.endsWith("@iitism.ac.in")) {
-        await firebaseSignOut(auth);
-        toast({
-            title: "Access Denied",
-            description: "Only @iitism.ac.in emails are allowed.",
-            variant: "destructive"
-        });
-        return;
-      }
       // The useEffect will handle the backend sync and redirect
     } catch (error: any) {
       console.error("Google Sign In Error:", error);

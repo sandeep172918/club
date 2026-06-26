@@ -20,7 +20,7 @@ export default function SigninPage() {
         <CardHeader>
           <CardTitle className="text-2xl text-center">Sign In</CardTitle>
           <CardDescription className="text-center">
-            Login with your institute email
+            Login with your Google account
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -33,9 +33,6 @@ export default function SigninPage() {
                 <Chrome className="h-5 w-5" />
                 Sign in with Google
             </Button>
-            <p className="text-xs text-center text-muted-foreground">
-                Only emails ending with <strong>@iitism.ac.in</strong> are allowed.
-            </p>
           </div>
         </CardContent>
       </Card>

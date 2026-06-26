@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import DecryptedText from "@/components/ui/decrypted-text";
 
 function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -49,9 +50,12 @@ function LeaderboardPage() {
     <main className="p-4 md:p-8">
       <div className="flex justify-between items-center mb-6">
         <div className="min-w-0 flex-1">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:truncate sm:text-4xl">
-            Leaderboard
-          </h1>
+          <DecryptedText
+            text="Leaderboard"
+            animateOn="view"
+            speed={100}
+            className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:truncate sm:text-4xl"
+          />
           <p className="mt-2 text-sm text-muted-foreground">
             See where you and your peers stand.
           </p>

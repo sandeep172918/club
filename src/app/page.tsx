@@ -1,145 +1,213 @@
-
-
 "use client";
-import { StatCard } from "@/components/dashboard/stat-card";
-// Removed unused imports: UpcomingContestsCard
+
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useCallback } from "react";
-// Removed unused imports: Contest, Student
-import { Users, TrendingUp, CalendarCheck, Code } from "lucide-react"; // Re-added TrendingUp, CalendarCheck
-
-// New Dashboard Components
-import SkillDistribution from "@/components/dashboard/skill-distribution";
-import ProgressSnapshot from "@/components/dashboard/progress-snapshot";
-import EngagementMetrics from "@/components/dashboard/engagement-metrics";
 import { useSocket } from "@/context/SocketContext";
+import { WeeklySummary } from "@/components/dashboard/weekly-summary";
+import { Heatmap } from "@/components/dashboard/heatmap";
+import { TopPerformers } from "@/components/dashboard/top-performers";
+import { RecentActivity } from "@/components/dashboard/recent-activity";
+import { ActivityCharts } from "@/components/dashboard/activity-charts";
+import { DifficultyBreakdown } from "@/components/dashboard/difficulty-breakdown";
+import { UpcomingContests } from "@/components/dashboard/upcoming-contests";
+import DecryptedText from "@/components/ui/decrypted-text";
 
-interface DashboardMetrics {
+interface DashboardData {
   totalStudents: number;
   problemsSolvedThisWeek: number;
   problemsSolvedLastWeek: number;
+  averageRating: number;
+  topPerformers: any[];
   skillDistribution: {
-    beginner: { count: number; percentage: number };
-    intermediate: { count: number; percentage: number };
-    advanced: { count: number; percentage: number };
+    beginner: number;
+    pupil: number;
+    specialist: number;
+    expert: number;
+    master: number;
   };
   progressSnapshot: {
     improved: number;
     same: number;
     dropped: number;
-    total: number;
   };
-  engagement: {
-    lastContestAttendance: { count: number; total: number; percentage: number };
-    activeMembersThisMonth: { count: number; total: number; percentage: number };
-  };
+  ratingDistribution: { range: string; count: number }[];
+  difficultyBreakdown: { difficulty: string; count: number }[];
+  recentActivities: any[];
+  heatmapData: { date: string; count: number }[];
+  upcomingContests: any[];
+  clubContests: any[];
 }
 
-function HomePage() {
+export default function HomePage() {
   const { user } = useAuth();
-  const [dashboardMetrics, setDashboardMetrics] = useState<DashboardMetrics | null>(null);
+  const { socket } = useSocket();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [ratingHistory, setRatingHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { socket } = useSocket();
 
-  const fetchDashboardMetrics = useCallback(async () => {
-    // Keep loading state mostly for initial load, or handle background refresh quietly
-    // setLoading(true); // Don't reset loading on socket updates to avoid flickering
+  const fetchMetrics = useCallback(async () => {
     try {
-      const res = await fetch("/api/dashboard-metrics");
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+      const [metricsRes, historyRes] = await Promise.all([
+        fetch("/api/dashboard-extended-metrics"),
+        fetch("/api/club-rating-history"),
+      ]);
+
+      if (!metricsRes.ok || !historyRes.ok) {
+        throw new Error("Failed to fetch dashboard metrics");
       }
-      const { data } = await res.json();
-      setDashboardMetrics(data);
+
+      const metricsJson = await metricsRes.json();
+      const historyJson = await historyRes.json();
+
+      if (metricsJson.success) {
+        setData(metricsJson.data);
+      } else {
+        throw new Error(metricsJson.error || "Failed to load metrics");
+      }
+
+      if (historyJson.success) {
+        setRatingHistory(historyJson.data);
+      }
     } catch (e: any) {
-      console.error("Fetch metrics error:", e);
-      // setError(e.message); // Don't show error on background refresh
+      console.error("Dashboard fetch error:", e);
+      setError(e.message);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchDashboardMetrics();
-  }, [fetchDashboardMetrics]);
+    fetchMetrics();
+  }, [fetchMetrics]);
 
   useEffect(() => {
     if (!socket) return;
-    const handleUpdate = (data: any) => {
-        if (['STUDENT_UPDATED', 'PROBLEM_ADDED', 'POTD_UPDATED', 'CONTEST_ADDED'].includes(data.type)) {
-            fetchDashboardMetrics();
-        }
+    const handleUpdate = (update: any) => {
+      // Trigger a soft refresh when socket reports changes
+      if (['STUDENT_UPDATED', 'PROBLEM_ADDED', 'POTD_UPDATED', 'CONTEST_ADDED', 'STUDENT_DELETED', 'STUDENT_ADDED'].includes(update.type)) {
+        fetchMetrics();
+      }
     };
     socket.on("data_update", handleUpdate);
     return () => {
-        socket.off("data_update", handleUpdate);
+      socket.off("data_update", handleUpdate);
     };
-  }, [socket, fetchDashboardMetrics]);
+  }, [socket, fetchMetrics]);
 
   if (loading) {
-    return <p className="p-4 md:p-8">Loading dashboard metrics...</p>;
+    return (
+      <div className="flex flex-col gap-10 animate-pulse">
+        {/* Hero skeleton */}
+        <div className="space-y-4 mt-4">
+          <div className="h-10 w-64 rounded bg-white/5" />
+          <div className="h-4 w-32 rounded bg-white/5" />
+          <div className="h-4 w-96 rounded bg-white/5" />
+        </div>
+        
+        {/* KPI skeleton */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="h-[160px] rounded-[20px] bg-[#161616] border border-white/5 col-span-1 md:col-span-2 xl:col-span-2" />
+          <div className="h-[160px] rounded-[20px] bg-[#161616] border border-white/5" />
+          <div className="h-[160px] rounded-[20px] bg-[#161616] border border-white/5" />
+        </div>
+
+        {/* Heatmap skeleton */}
+        <div className="h-[190px] rounded-[20px] bg-[#161616] border border-white/5 w-full" />
+      </div>
+    );
   }
 
   if (error) {
-    return <p className="p-4 md:p-8">Error: {error}</p>;
+    return (
+      <div className="flex h-[50vh] flex-col items-center justify-center text-center">
+        <p className="text-sm font-semibold text-[#F85149]">Failed to load dashboard metrics</p>
+        <p className="text-xs text-[#7A7A7A] mt-1">{error}</p>
+        <button 
+          onClick={() => { setLoading(true); fetchMetrics(); }} 
+          className="mt-4 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-white hover:bg-white/10"
+        >
+          Try Again
+        </button>
+      </div>
+    );
   }
 
-  if (!dashboardMetrics) {
-    return <p className="p-4 md:p-8">No dashboard metrics available.</p>;
-  }
+  if (!data) return null;
+
+  // Resolve greeting based on hour of day
+  const getGreeting = () => {
+    const hr = new Date().getHours();
+    if (hr < 12) return "Good Morning";
+    if (hr < 18) return "Good Afternoon";
+    return "Good Evening";
+  };
+
+  const firstName = user?.name ? user.name.split(" ")[0] : "Sandeep";
 
   return (
-    <div>
-        <main className="p-4 md:p-8">
-          <div className="mb-6 md:flex md:items-center md:justify-between">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-3xl font-bold leading-tight tracking-tight text-foreground sm:truncate sm:text-4xl">
-                {`Welcome, ${user?.name}`}
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Here's a snapshot of your club's performance.
-              </p>
-            </div>
-          </div>
+    <div className="flex flex-col gap-10">
+      
+      {/* Hero Section */}
+      <div className="space-y-2 mt-4">
+        <div className="flex items-center gap-1">
+          <h1 className="text-[34px] sm:text-[42px] font-bold tracking-tight text-white leading-none">
+            {getGreeting()},
+          </h1>
+          <DecryptedText
+            text={firstName}
+            animateOn="view"
+            speed={80}
+            className="text-[34px] sm:text-[42px] font-bold tracking-tight text-[#7EE787] leading-none"
+          />
+        </div>
+        <p className="text-[12px] font-semibold text-[#7A7A7A] uppercase tracking-widest">
+          CP Club Dashboard
+        </p>
+        <p className="text-[14px] text-[#B5B5B5] max-w-xl">
+          Weekly overview of club performance and competitive programming analytics.
+        </p>
+      </div>
 
-          {/* Prominent Metrics */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <StatCard
-              title="Total Students"
-              value={String(dashboardMetrics.totalStudents)}
-              icon={Users}
-              description="Club Members"
-            />
-            <StatCard
-              title="Problems Solved This Week"
-              value={String(dashboardMetrics.problemsSolvedThisWeek)}
-              icon={Code}
-              description="Unique problems solved in the last 7 days."
-            />
-            <StatCard
-              title="Problems Solved Last Week"
-              value={String(dashboardMetrics.problemsSolvedLastWeek)}
-              icon={Code}
-              description="Unique problems solved in the 7 days prior to this week."
-            />
-          </div>
+      {/* Row 1: KPI Stats */}
+      <WeeklySummary
+        totalStudents={data.totalStudents}
+        problemsSolvedThisWeek={data.problemsSolvedThisWeek}
+        problemsSolvedLastWeek={data.problemsSolvedLastWeek}
+        averageRating={data.averageRating}
+        progressSnapshot={data.progressSnapshot}
+        upcomingContestsCount={data.upcomingContests.length + data.clubContests.length}
+      />
 
-          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {/* SKILL DISTRIBUTION */}
-            <SkillDistribution data={dashboardMetrics.skillDistribution} totalStudents={dashboardMetrics.totalStudents} />
+      {/* Row 2: Heatmap */}
+      <Heatmap data={data.heatmapData} />
 
-            {/* PROGRESS SNAPSHOT */}
-            <ProgressSnapshot data={dashboardMetrics.progressSnapshot} />
-          </div>
+      {/* Row 3: Leaderboard & Activity Feed */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <TopPerformers performers={data.topPerformers} />
+        <RecentActivity activities={data.recentActivities} />
+      </div>
 
-          {/* ENGAGEMENT */}
-          <div className="mt-8">
-            <EngagementMetrics data={dashboardMetrics.engagement} />
-          </div>
-        </main>
+      {/* Row 4: Recharts Rating Trend & Rating Tier Distribution */}
+      <ActivityCharts
+        ratingDistribution={data.ratingDistribution}
+        difficultyBreakdown={data.difficultyBreakdown}
+        averageRatingHistory={ratingHistory}
+      />
+
+      {/* Row 5: Skill battery & Problem Difficulty solved */}
+      <DifficultyBreakdown
+        skillDistribution={data.skillDistribution}
+        difficultyBreakdown={data.difficultyBreakdown}
+        totalStudents={data.totalStudents}
+      />
+
+      {/* Row 6: Scheduled and External Contests */}
+      <UpcomingContests
+        externalContests={data.upcomingContests}
+        clubContests={data.clubContests}
+      />
+
     </div>
   );
 }
-
-export default HomePage;

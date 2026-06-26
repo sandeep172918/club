@@ -8,7 +8,6 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { Toaster } from "@/components/ui/toaster";
 import SupportBubble from "@/components/support-bubble";
 import { SocketProvider } from "@/context/SocketContext";
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -24,15 +23,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider>
-          <AuthProvider>
-            <SocketProvider>
-              <MainLayout>{children}</MainLayout>
-              <SupportBubble />
-              <Toaster />
-            </SocketProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <div className="relative z-10">
+          <ThemeProvider>
+            <AuthProvider>
+              <SocketProvider>
+                <MainLayout>{children}</MainLayout>
+                <SupportBubble />
+                <Toaster />
+              </SocketProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </div>
       </body>
     </html>
   );

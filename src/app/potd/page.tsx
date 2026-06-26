@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import DecryptedText from "@/components/ui/decrypted-text";
 
 export default function POTDPage() {
   const { user, refreshUser } = useAuth();
@@ -109,7 +110,12 @@ export default function POTDPage() {
     <main className="p-4 md:p-8 space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
-            <h1 className="text-3xl font-bold tracking-tight">Problem of the Day</h1>
+            <DecryptedText
+                text="Problem of the Day"
+                animateOn="view"
+                speed={100}
+                className="text-3xl font-bold tracking-tight"
+            />
             <p className="text-muted-foreground">Solve daily challenges to earn points and climb the leaderboard.</p>
         </div>
         <div className="flex gap-2">

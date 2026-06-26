@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle } from "lucide-react";
+import DecryptedText from "@/components/ui/decrypted-text";
 
 function ProfilePage() {
   const { user, refreshUser } = useAuth();
@@ -87,7 +88,13 @@ function ProfilePage() {
       <div className="grid gap-4">
         <Card className="col-span-4 lg:col-span-3">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-2xl font-bold">My Profile</CardTitle>
+            <CardTitle className="text-2xl font-bold">
+              <DecryptedText
+                text="My Profile"
+                animateOn="view"
+                speed={100}
+              />
+            </CardTitle>
             <div className="flex gap-2">
                 {!user?.codeforcesHandle ? (
                     <VerifyCodeforcesDialog onVerified={handleVerifyCodeforces} />
