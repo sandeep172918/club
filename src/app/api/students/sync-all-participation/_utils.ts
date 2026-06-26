@@ -119,7 +119,7 @@ export async function syncAllStudentsBatch() {
       const infoRes = await fetch(`https://codeforces.com/api/user.info?handles=${handles.join(';')}`);
       if (infoRes.ok) {
         const { result: usersInfo } = (await infoRes.json()) as any;
-        const infoMap = new Map(usersInfo.map((u: any) => [u.handle.toLowerCase(), u]));
+        const infoMap = new Map<string, any>(usersInfo.map((u: any) => [u.handle.toLowerCase(), u]));
 
         for (const student of students) {
           const info = infoMap.get(student.codeforcesHandle!.toLowerCase());
@@ -197,7 +197,7 @@ export async function syncAllStudentsBatch() {
         const participatedSet = participationMap.get(studentHandle);
         if (participatedSet) {
           const existingParticipation = student.contestParticipation || [];
-          const existingMap = new Map(existingParticipation.map(p => [p.contestId, p.participated]));
+          const existingMap = new Map(existingParticipation.map((p: any) => [p.contestId, p.participated]));
 
           for (const contestId of participatedSet) {
             existingMap.set(contestId, true);
@@ -207,7 +207,7 @@ export async function syncAllStudentsBatch() {
             contestId,
             participated
           }));
-          student.totalContestsGiven = student.contestParticipation.filter(p => p.participated).length;
+          student.totalContestsGiven = student.contestParticipation.filter((p: any) => p.participated).length;
         }
       }
       console.log("Updated all student attendance records via batch standings calls.");
