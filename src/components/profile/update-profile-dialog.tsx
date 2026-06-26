@@ -23,6 +23,7 @@ interface UpdateProfileDialogProps {
       shirtSize?: string;
       sport?: string;
       branch?: string;
+      graduatingYear?: number;
     }
   ) => void;
 }
@@ -37,6 +38,9 @@ export default function UpdateProfileDialog({
   const [shirtSize, setShirtSize] = useState(user?.shirtSize || "");
   const [sport, setSport] = useState(user?.sport || "");
   const [branch, setBranch] = useState(user?.branch || "");
+  const [graduatingYear, setGraduatingYear] = useState(
+    user?.graduatingYear ? String(user.graduatingYear) : ""
+  );
   const [isOpen, setIsOpen] = useState(false);
 
   const { toast } = useToast();
@@ -47,6 +51,7 @@ export default function UpdateProfileDialog({
       setShirtSize(user?.shirtSize || "");
       setSport(user?.sport || "");
       setBranch(user?.branch || "");
+      setGraduatingYear(user?.graduatingYear ? String(user.graduatingYear) : "");
     }
   }, [isOpen, user]);
 
@@ -58,6 +63,7 @@ export default function UpdateProfileDialog({
       shirtSize,
       sport,
       branch,
+      graduatingYear: graduatingYear ? parseInt(graduatingYear) : undefined,
     };
 
     onUpdateProfile(updates);
@@ -117,6 +123,19 @@ export default function UpdateProfileDialog({
               value={branch}
               onChange={(e) => setBranch(e.target.value)}
               className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="graduatingYear" className="text-right">
+              Graduating Year
+            </Label>
+            <Input
+              id="graduatingYear"
+              type="number"
+              value={graduatingYear}
+              onChange={(e) => setGraduatingYear(e.target.value)}
+              className="col-span-3"
+              placeholder="e.g. 2026"
             />
           </div>
           <Button type="submit">Update</Button>

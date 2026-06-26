@@ -67,13 +67,15 @@ function LeaderboardPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All Years</SelectItem>
-              <SelectItem value="22">2022</SelectItem>
-              <SelectItem value="23">2023</SelectItem>
-              <SelectItem value="24">2024</SelectItem>
-              <SelectItem value="25">2025</SelectItem>
-              <SelectItem value="26">2026</SelectItem>
-              <SelectItem value="27">2027</SelectItem>
-              <SelectItem value="28">2028</SelectItem>
+              <SelectItem value="2022">2022</SelectItem>
+              <SelectItem value="2023">2023</SelectItem>
+              <SelectItem value="2024">2024</SelectItem>
+              <SelectItem value="2025">2025</SelectItem>
+              <SelectItem value="2026">2026</SelectItem>
+              <SelectItem value="2027">2027</SelectItem>
+              <SelectItem value="2028">2028</SelectItem>
+              <SelectItem value="2029">2029</SelectItem>
+              <SelectItem value="2030">2030</SelectItem>
             </SelectContent>
           </Select>
         </div>

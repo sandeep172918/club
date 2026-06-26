@@ -11,6 +11,7 @@ export interface Student {
   shirtSize?: string;
   sport?: string;
   branch?: string;
+  graduatingYear?: number;
   points: number;
   solvedPOTDs?: string[];
   solvedResources?: string[];

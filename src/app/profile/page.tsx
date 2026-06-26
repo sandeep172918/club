@@ -29,6 +29,7 @@ function ProfilePage() {
     shirtSize?: string;
     sport?: string;
     branch?: string;
+    graduatingYear?: number;
   }) => {
     if (user) {
       const res = await fetch(`/api/students/${(user as any)._id}`, {
@@ -158,6 +159,10 @@ function ProfilePage() {
               <div className="flex items-center">
                 <span className="font-semibold w-1/2 text-muted-foreground">Branch:</span>
                 <span className="w-1/2 text-foreground">{user?.branch || "N/A"}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="font-semibold w-1/2 text-muted-foreground">Graduating Year:</span>
+                <span className="w-1/2 text-foreground">{user?.graduatingYear || "N/A"}</span>
               </div>
             </div>
           </CardContent>

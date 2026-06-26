@@ -32,6 +32,7 @@ export const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
   const [email, setEmail] = useState("");
   const [codeforcesHandle, setCodeforcesHandle] = useState("");
   const [hashKey, setHashKey] = useState("");
+  const [graduatingYear, setGraduatingYear] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { socket } = useSocket();
@@ -61,6 +62,7 @@ export const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
           email,
           codeforcesHandle: codeforcesHandle || undefined,
           hashKey,
+          graduatingYear: graduatingYear ? parseInt(graduatingYear) : undefined,
         }),
       });
 
@@ -78,6 +80,7 @@ export const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
         setEmail("");
         setCodeforcesHandle("");
         setHashKey("");
+        setGraduatingYear("");
         onClose();
       } else {
         toast({
@@ -155,6 +158,19 @@ export const AddStudentDialog: React.FC<AddStudentDialogProps> = ({
               onChange={(e) => setHashKey(e.target.value)}
               className="col-span-3"
               placeholder="Secret login key"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="graduatingYear" className="text-right">
+              Graduating Year
+            </Label>
+            <Input
+              id="graduatingYear"
+              type="number"
+              value={graduatingYear}
+              onChange={(e) => setGraduatingYear(e.target.value)}
+              className="col-span-3"
+              placeholder="e.g. 2026"
             />
           </div>
         </div>

@@ -10,7 +10,10 @@ const StudentSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    match: /.+\@iitism\.ac\.in$/,
+  },
+  graduatingYear: {
+    type: Number,
+    required: false,
   },
   role: {
     type: String,
@@ -73,5 +76,9 @@ const StudentSchema = new mongoose.Schema({
     },
   ],
 });
+
+if (mongoose.models && mongoose.models.Student) {
+  delete mongoose.models.Student;
+}
 
 export default mongoose.models.Student || mongoose.model('Student', StudentSchema);

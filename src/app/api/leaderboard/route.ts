@@ -13,7 +13,20 @@ export async function GET(req: NextRequest) {
     const query: any = { codeforcesHandle: { $exists: true, $ne: null } };
 
     if (year && year !== 'All') {
-        query.email = { $regex: new RegExp(`^${year}.*@iitism\\.ac\\.in$`) };
+        const targetYearNum = parseInt(year);
+        if (!isNaN(targetYearNum)) {
+            const targetGradYear = targetYearNum < 100 ? 2000 + targetYearNum : targetYearNum;
+            const derivedEntryYear = (targetGradYear - 2000) - 4;
+            const entryYearStr = derivedEntryYear.toString().padStart(2, '0');
+            
+            query.$or = [
+                { graduatingYear: targetGradYear },
+                {
+                    graduatingYear: { $exists: false },
+                    email: { $regex: new RegExp(`^${entryYearStr}.*@iitism\\.ac\\.in$`) }
+                }
+            ];
+        }
     }
 
     const students = await Student.find(query).sort({ currentRating: -1 });

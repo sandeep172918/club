@@ -12,8 +12,15 @@ export async function GET(req: NextRequest) {
     const query: any = { points: { $gt: 0 } };
 
     if (year && year !== 'All') {
-        query.email = { $regex: new RegExp(`^${year}.*@iitism\\.ac\\.in$`) };
+    const targetYearNum = parseInt(year);
+
+    if (!isNaN(targetYearNum)) {
+        const targetGradYear =
+            targetYearNum < 100 ? 2000 + targetYearNum : targetYearNum;
+
+        query.graduatingYear = targetGradYear;
     }
+}
 
     // Fetch students sorted by points in descending order.
     // Limit to top 50 or similar to avoid huge payloads if many users.

@@ -31,6 +31,9 @@ export const EditStudentDialog: React.FC<EditStudentDialogProps> = ({
   const [codeforcesHandle, setCodeforcesHandle] = useState(
     student?.codeforcesHandle || ""
   );
+  const [graduatingYear, setGraduatingYear] = useState(
+    student?.graduatingYear ? String(student.graduatingYear) : ""
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +41,7 @@ export const EditStudentDialog: React.FC<EditStudentDialogProps> = ({
     if (student) {
       setName(student.name);
       setCodeforcesHandle(student.codeforcesHandle || "");
+      setGraduatingYear(student.graduatingYear ? String(student.graduatingYear) : "");
     }
   }, [student]);
 
@@ -53,16 +57,25 @@ export const EditStudentDialog: React.FC<EditStudentDialogProps> = ({
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, codeforcesHandle }),
+        body: JSON.stringify({
+          name,
+          codeforcesHandle,
+          graduatingYear: graduatingYear ? parseInt(graduatingYear) : undefined,
+        }),
       });
 
       const result = await response.json();
 
       if (response.ok && result.success) {
-        onUpdate({ ...student, name, codeforcesHandle });
+        onUpdate({
+          ...student,
+          name,
+          codeforcesHandle,
+          graduatingYear: graduatingYear ? parseInt(graduatingYear) : undefined,
+        });
         onClose();
       } else {
-        setError(result.message || "Failed to update student.");
+        setError(result.error || result.message || "Failed to update student.");
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -102,6 +115,19 @@ export const EditStudentDialog: React.FC<EditStudentDialogProps> = ({
               value={codeforcesHandle}
               onChange={(e) => setCodeforcesHandle(e.target.value)}
               className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="graduatingYear" className="text-right">
+              Graduating Year
+            </Label>
+            <Input
+              id="graduatingYear"
+              type="number"
+              value={graduatingYear}
+              onChange={(e) => setGraduatingYear(e.target.value)}
+              className="col-span-3"
+              placeholder="e.g. 2026"
             />
           </div>
         </div>
