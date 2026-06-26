@@ -1,23 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Student from '@/models/Student';
-import { updateStudentParticipation } from './_utils'; // Assuming a utility to handle the update logic
+import { syncAllStudentsBatch } from './_utils';
 
 export async function POST(req: NextRequest) {
   await dbConnect();
 
   try {
-    const students = await Student.find({});
-
-    const updatePromises = students.map(student =>
-      updateStudentParticipation(student._id.toString())
-    );
-
-    await Promise.all(updatePromises);
-
+    await syncAllStudentsBatch();
     return NextResponse.json({ success: true, message: 'All students participation updated successfully.' });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error syncing all students participation:", error);
-    return NextResponse.json({ success: false, error: 'Failed to sync all students participation.' }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

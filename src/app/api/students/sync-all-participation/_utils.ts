@@ -1,7 +1,10 @@
 import Student from '@/models/Student';
+import Club from '@/models/Club';
 import dbConnect from '@/lib/db';
-import { startOfWeek, subWeeks, isWithinInterval, subDays } from 'date-fns'; // Import new date-fns functions
+import { startOfWeek, subWeeks, isWithinInterval, subDays } from 'date-fns';
+import fetch from 'node-fetch';
 
+// Single student sync (useful for individual updates)
 export async function updateStudentParticipation(studentId: string) {
   await dbConnect();
 
@@ -19,12 +22,12 @@ export async function updateStudentParticipation(studentId: string) {
     }
 
     let rawRatingHistory: any[] = [];
-    // --- Update Rating History (limit to 1 entry) ---
+    // --- Update Rating History ---
     try {
       const cfRatingResponse = await fetch(`https://codeforces.com/api/user.rating?handle=${codeforcesHandle}`);
       if (cfRatingResponse.ok) {
-        const { result: ratingHistory } = await cfRatingResponse.json();
-        rawRatingHistory = ratingHistory; // Store raw rating history for participation
+        const { result: ratingHistory } = (await cfRatingResponse.json()) as any;
+        rawRatingHistory = ratingHistory;
         if (ratingHistory && ratingHistory.length > 0) {
           const latestRating = ratingHistory[ratingHistory.length - 1];
           student.ratingHistory = [{
@@ -37,100 +40,223 @@ export async function updateStudentParticipation(studentId: string) {
           student.currentRating = latestRating.newRating;
         } else {
           student.ratingHistory = [];
-          student.currentRating = 0; // Or keep previous if no history
+          student.currentRating = 0;
         }
-      } else {
-        console.warn(`Failed to fetch rating for ${codeforcesHandle}: ${cfRatingResponse.statusText}`);
       }
     } catch (ratingError) {
       console.error(`Error fetching rating history for ${codeforcesHandle}:`, ratingError);
     }
 
-    // --- Update Problems Solved This Week and Last Week ---
+    // --- Update Problems Solved ---
     try {
-      console.log(`Fetching submissions for ${codeforcesHandle} to calculate weekly problems solved...`);
-      const allSubmissions: any[] = [];
-      let from = 1;
-      const countPerPage = 500; // Fetch 500 submissions at a time
-
-      // Define week intervals
       const today = new Date();
-      const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 }); // Monday
+      const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
       const startOfLastWeek = subWeeks(startOfCurrentWeek, 1);
-      const endOfLastWeek = subWeeks(startOfCurrentWeek, 0); // End of last week is start of current week - 1ms
-      // The interval for "this week" goes up to 'today' (inclusive).
-      // The interval for "last week" goes from 'startOfLastWeek' to 'endOfLastWeek - 1ms' (exclusive of current week's start).
 
-      let hasMoreSubmissions = true;
+      const cfSubmissionsResponse = await fetch(`https://codeforces.com/api/user.status?handle=${codeforcesHandle}&from=1&count=200`);
+      if (cfSubmissionsResponse.ok) {
+        const { result: submissions } = (await cfSubmissionsResponse.json()) as any;
+        if (submissions && submissions.length > 0) {
+          const solvedProblemsThisWeekSet = new Set<string>();
+          const solvedProblemsLastWeekSet = new Set<string>();
 
-      while (hasMoreSubmissions) {
-        const cfSubmissionsResponse = await fetch(`https://codeforces.com/api/user.status?handle=${codeforcesHandle}&from=${from}&count=${countPerPage}`);
-        console.log(`Submissions response status for ${codeforcesHandle} (from=${from}): ${cfSubmissionsResponse.status}`);
-        if (!cfSubmissionsResponse.ok) {
-          console.warn(`Failed to fetch Codeforces submissions for ${codeforcesHandle} (from=${from}). Skipping problem count update.`);
-          break; // Exit loop if fetching fails
-        }
-        const { result: submissionsBatch } = await cfSubmissionsResponse.json();
+          submissions.forEach((submission: any) => {
+            const submissionTime = new Date(submission.creationTimeSeconds * 1000);
+            const problemIdentifier = `${submission.problem.contestId}-${submission.problem.index}`;
 
-        if (!submissionsBatch || submissionsBatch.length === 0) {
-          break; // No more submissions
-        }
-
-        allSubmissions.push(...submissionsBatch);
-        from += countPerPage; // Prepare for next batch
-
-        // Optimization: stop fetching if submissions are older than last two weeks
-        const oldestSubmissionTime = submissionsBatch[submissionsBatch.length - 1].creationTimeSeconds * 1000;
-        if (oldestSubmissionTime < startOfLastWeek.getTime()) {
-            hasMoreSubmissions = false; // Stop if the oldest submission in the batch is older than the start of last week
-        }
-        if (submissionsBatch.length < countPerPage) {
-          hasMoreSubmissions = false; // Last batch was smaller, so no more submissions
+            if (submission.verdict === "OK" && submission.problem && submission.problem.contestId && submission.problem.index) {
+              if (isWithinInterval(submissionTime, { start: startOfCurrentWeek, end: today })) {
+                solvedProblemsThisWeekSet.add(problemIdentifier);
+              } else if (isWithinInterval(submissionTime, { start: startOfLastWeek, end: subDays(startOfCurrentWeek, 1) })) {
+                solvedProblemsLastWeekSet.add(problemIdentifier);
+              }
+            }
+          });
+          student.problemsSolvedThisWeek = solvedProblemsThisWeekSet.size;
+          student.problemsSolvedLastWeek = solvedProblemsLastWeekSet.size;
         }
       }
-
-      const solvedProblemsThisWeekSet = new Set<string>(); // Stores "contestId-problemIndex"
-      const solvedProblemsLastWeekSet = new Set<string>(); // Stores "contestId-problemIndex"
-
-      allSubmissions.forEach(submission => {
-        const submissionTime = new Date(submission.creationTimeSeconds * 1000);
-        const problemIdentifier = `${submission.problem.contestId}-${submission.problem.index}`;
-
-        if (submission.verdict === "OK" && submission.problem && submission.problem.contestId && submission.problem.index) {
-          if (isWithinInterval(submissionTime, { start: startOfCurrentWeek, end: today })) { // This week interval
-            solvedProblemsThisWeekSet.add(problemIdentifier);
-          } else if (isWithinInterval(submissionTime, { start: startOfLastWeek, end: subDays(startOfCurrentWeek, 1) })) { // Last week interval
-            solvedProblemsLastWeekSet.add(problemIdentifier);
-          }
-        }
-      });
-      student.problemsSolvedThisWeek = solvedProblemsThisWeekSet.size;
-      student.problemsSolvedLastWeek = solvedProblemsLastWeekSet.size;
-      console.log(`Student ${student.name} problemsSolvedThisWeek set to: ${student.problemsSolvedThisWeek}`);
-      console.log(`Student ${student.name} problemsSolvedLastWeek set to: ${student.problemsSolvedLastWeek}`);
-
     } catch (problemsSolvedError) {
       console.error(`Error calculating weekly problems solved for ${codeforcesHandle}:`, problemsSolvedError);
     }
 
-    // --- Update Contest Participation using rawRatingHistory ---
+    // --- Update Contest Participation ---
     const participatedContestIds = new Set<string>();
     rawRatingHistory.forEach(entry => {
         participatedContestIds.add(entry.contestId.toString());
     });
 
-    const newParticipation: { contestId: string; participated: boolean }[] = Array.from(participatedContestIds).map(
-      (contestId) => ({
-        contestId,
-        participated: true,
-      })
-    );
+    const newParticipation = Array.from(participatedContestIds).map((contestId) => ({
+      contestId,
+      participated: true,
+    }));
     
     student.contestParticipation = newParticipation;
     student.totalContestsGiven = newParticipation.length;
     await student.save();
-    console.log(`Updated participation for student: ${student.name}. Total contests: ${student.totalContestsGiven}`);
   } catch (error) {
     console.error(`Error in updateStudentParticipation for student ID ${studentId}:`, error);
+  }
+}
+
+// Seamless Batch sync for ALL students (highly optimized to prevent Codeforces throttling)
+export async function syncAllStudentsBatch() {
+  await dbConnect();
+
+  try {
+    // 1. Fetch all students with handles
+    const students = await Student.find({ codeforcesHandle: { $exists: true, $ne: null } });
+    if (students.length === 0) {
+      console.log("No students with Codeforces handles found to sync.");
+      return;
+    }
+
+    const handles = students.map(s => s.codeforcesHandle).filter(Boolean) as string[];
+    console.log(`Starting optimized batch sync for handles: ${handles.join(', ')}`);
+
+    // 2. Fetch current ratings in a single batch request (user.info)
+    try {
+      const infoRes = await fetch(`https://codeforces.com/api/user.info?handles=${handles.join(';')}`);
+      if (infoRes.ok) {
+        const { result: usersInfo } = (await infoRes.json()) as any;
+        const infoMap = new Map(usersInfo.map((u: any) => [u.handle.toLowerCase(), u]));
+
+        for (const student of students) {
+          const info = infoMap.get(student.codeforcesHandle!.toLowerCase());
+          if (info) {
+            student.currentRating = info.rating || 0;
+            if (student.ratingHistory.length === 0 && info.rating) {
+              student.ratingHistory = [{
+                contestId: "initial",
+                contestName: "Current Codeforces Rating",
+                rating: info.rating,
+                change: 0,
+                timestamp: new Date()
+              }];
+            }
+          }
+        }
+        console.log("Updated all student ratings via batch user.info call.");
+      }
+    } catch (error) {
+      console.error("Error fetching user info in batch:", error);
+    }
+
+    // 3. Fetch latest finished Codeforces contests
+    let contests: any[] = [];
+    try {
+      const listRes = await fetch('https://codeforces.com/api/contest.list?gym=false');
+      if (listRes.ok) {
+        const { result } = (await listRes.json()) as any;
+        contests = result
+          .filter((c: any) => c.phase === 'FINISHED')
+          .sort((a: any, b: any) => b.startTimeSeconds - a.startTimeSeconds)
+          .slice(0, 15); // Sync last 15 contests
+      }
+    } catch (error) {
+      console.error("Error fetching contest list:", error);
+    }
+
+    if (contests.length > 0) {
+      const participationMap = new Map<string, Set<string>>();
+      for (const handle of handles) {
+        participationMap.set(handle.toLowerCase(), new Set<string>());
+      }
+
+      // Query standings for each of the last 15 contests
+      for (const contest of contests) {
+        try {
+          // Delay to stay rate limit friendly (Codeforces limit is 1 req per 2s, but standings with handle filters is light)
+          await new Promise(resolve => setTimeout(resolve, 350));
+
+          const standingsRes = await fetch(
+            `https://codeforces.com/api/contest.standings?contestId=${contest.id}&handles=${handles.join(';')}&showUnofficial=true`
+          );
+
+          if (standingsRes.ok) {
+            const { result } = (await standingsRes.json()) as any;
+            if (result && result.rows) {
+              for (const row of result.rows) {
+                for (const member of row.party.members) {
+                  const memberHandle = member.handle.toLowerCase();
+                  if (participationMap.has(memberHandle)) {
+                    participationMap.get(memberHandle)!.add(contest.id.toString());
+                  }
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching standings for contest ${contest.id}:`, error);
+        }
+      }
+
+      // Merge and update student contestParticipation
+      for (const student of students) {
+        const studentHandle = student.codeforcesHandle!.toLowerCase();
+        const participatedSet = participationMap.get(studentHandle);
+        if (participatedSet) {
+          const existingParticipation = student.contestParticipation || [];
+          const existingMap = new Map(existingParticipation.map(p => [p.contestId, p.participated]));
+
+          for (const contestId of participatedSet) {
+            existingMap.set(contestId, true);
+          }
+
+          student.contestParticipation = Array.from(existingMap.entries()).map(([contestId, participated]) => ({
+            contestId,
+            participated
+          }));
+          student.totalContestsGiven = student.contestParticipation.filter(p => p.participated).length;
+        }
+      }
+      console.log("Updated all student attendance records via batch standings calls.");
+    }
+
+    // 4. Fetch submissions sequentially with a rate-limit safe delay for weekly problems solved
+    const today = new Date();
+    const startOfCurrentWeek = startOfWeek(today, { weekStartsOn: 1 });
+    const startOfLastWeek = subWeeks(startOfCurrentWeek, 1);
+
+    for (const student of students) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 400));
+        const handle = student.codeforcesHandle;
+        const cfSubmissionsResponse = await fetch(
+          `https://codeforces.com/api/user.status?handle=${handle}&from=1&count=250`
+        );
+
+        if (cfSubmissionsResponse.ok) {
+          const { result: submissions } = (await cfSubmissionsResponse.json()) as any;
+          if (submissions && submissions.length > 0) {
+            const solvedProblemsThisWeekSet = new Set<string>();
+            const solvedProblemsLastWeekSet = new Set<string>();
+
+            submissions.forEach((submission: any) => {
+              const submissionTime = new Date(submission.creationTimeSeconds * 1000);
+              const problemIdentifier = `${submission.problem.contestId}-${submission.problem.index}`;
+
+              if (submission.verdict === "OK" && submission.problem && submission.problem.contestId && submission.problem.index) {
+                if (isWithinInterval(submissionTime, { start: startOfCurrentWeek, end: today })) {
+                  solvedProblemsThisWeekSet.add(problemIdentifier);
+                } else if (isWithinInterval(submissionTime, { start: startOfLastWeek, end: subDays(startOfCurrentWeek, 1) })) {
+                  solvedProblemsLastWeekSet.add(problemIdentifier);
+                }
+              }
+            });
+
+            student.problemsSolvedThisWeek = solvedProblemsThisWeekSet.size;
+            student.problemsSolvedLastWeek = solvedProblemsLastWeekSet.size;
+          }
+        }
+      } catch (e) {
+        console.error(`Error fetching weekly submissions for ${student.codeforcesHandle}:`, e);
+      }
+
+      await student.save();
+    }
+    console.log("Batch sync completed successfully.");
+  } catch (error) {
+    console.error("Critical error in syncAllStudentsBatch:", error);
   }
 }

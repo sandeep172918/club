@@ -12,7 +12,7 @@ export async function GET(
   await dbConnect();
 
   try {
-    const student = await Student.findById(params.id);
+    const student = await Student.findById(params.id).populate('clubId');
     if (!student) {
       return NextResponse.json(
         { success: false, error: 'Student not found' },
@@ -99,7 +99,7 @@ export async function PUT(
     if (
         isAdmin(student.email)
     ) {
-        student.role = 'admin';
+        student.role = 'super_admin';
         await student.save();
     }
 

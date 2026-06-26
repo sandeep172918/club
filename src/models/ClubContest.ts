@@ -18,6 +18,11 @@ const ClubContestSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  clubId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Club',
+    required: false,
+  },
 });
 
 export default mongoose.models.ClubContest || mongoose.model('ClubContest', ClubContestSchema);

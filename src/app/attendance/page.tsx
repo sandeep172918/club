@@ -26,20 +26,17 @@ function AttendancePage() {
   const { socket } = useSocket();
 
   const fetchData = async () => {
-    // Keep loading mostly for first load
-    // setLoading(true); 
     setError(null);
     try {
-      // Fetch attendance data (now pre-processed by API)
-      const resAttendance = await fetch("/api/attendance");
+      const clubId = typeof user?.clubId === 'object' && user?.clubId ? (user.clubId as any)._id : (user?.clubId || "all");
+      const resAttendance = await fetch(`/api/attendance?clubId=${clubId}`);
       if (!resAttendance.ok) {
         throw new Error(`HTTP error! status: ${resAttendance.status}`);
       }
       const { data: processedAttendanceData } = await resAttendance.json();
       setAttendanceData(processedAttendanceData);
 
-      // Fetch students separately for the table headers
-      const resStudents = await fetch("/api/students");
+      const resStudents = await fetch(`/api/students?clubId=${clubId}`);
       if (!resStudents.ok) {
         throw new Error(`HTTP error! status: ${resStudents.status}`);
       }
@@ -68,6 +65,14 @@ function AttendancePage() {
         socket.off("data_update", handleUpdate);
     };
   }, [socket]);
+
+  // 30-second polling fallback auto-refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleUpdateAttendance = async () => {
     // This button now primarily triggers a refresh of the attendance data
@@ -146,16 +151,14 @@ function AttendancePage() {
               </SelectContent>
             </Select>
           </div>
-          {user?.role === "admin" && (
+          {(user?.role === "super_admin" || user?.role === "coordinator") && (
             <div className="flex space-x-2">
-              {user?.role === "admin" && (
-                <Button
-                  onClick={handleSyncContests}
-                  disabled={syncingContests}
-                >
-                  {syncingContests ? "Syncing..." : "Sync Contests"}
-                </Button>
-              )}
+              <Button
+                onClick={handleSyncContests}
+                disabled={syncingContests}
+              >
+                {syncingContests ? "Syncing..." : "Sync Contests"}
+              </Button>
             </div>
           )}
         </div>

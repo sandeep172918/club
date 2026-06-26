@@ -32,7 +32,7 @@ export default function Navbar() {
     { href: "/potd", label: "POTD" },
     { href: "/upcoming-contests", label: "Upcoming Contests" },
     { href: "/resources", label: "Resources" },
-    user?.role === "admin"
+    (user?.role === "super_admin" || user?.role === "coordinator")
       ? { href: "/students", label: "Students" }
       : { href: "/profile", label: "Profile" },
   ];

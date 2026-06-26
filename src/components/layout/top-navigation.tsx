@@ -53,16 +53,24 @@ export function TopNavigation() {
   const formattedTime = time ? format(time, "hh:mm:ss a") : "";
   const formattedDate = time ? format(time, "EEE, MMM dd, yyyy") : "";
 
+  const getClubDisplayName = () => {
+    if (user.role === 'super_admin') {
+      return 'Super Admin';
+    }
+    if (typeof user.clubId === 'object' && user.clubId) {
+      return (user.clubId as any).name;
+    }
+    return 'Unassigned';
+  };
+
+  const isAdminOrCoordinator = user.role === "super_admin" || user.role === "coordinator";
   const navItems = [
     { href: "/", label: "Dashboard" },
     { href: "/potd", label: "POTD" },
     { href: "/attendance", label: "Attendance" },
     { href: "/upcoming-contests", label: "Contests" },
-    { 
-      href: user.role === "admin" ? "/students" : "/profile", 
-      label: "Members" 
-    },
-    { href: "/profile", label: "Settings" }
+    ...(isAdminOrCoordinator ? [{ href: "/students", label: "Members" }] : []),
+    { href: "/profile", label: "Profile" }
   ];
 
   return (
@@ -104,14 +112,14 @@ export function TopNavigation() {
             {formattedTime || "00:00:00 AM"}
           </span>
           <span className="text-[10px] font-semibold uppercase tracking-widest text-[#7A7A7A] mt-0.5">
-            Local Time
+            {formattedDate}
           </span>
         </div>
 
-        {/* Right Side: Date, User Info, Actions */}
+        {/* Right Side: Club Name, User Info, Actions */}
         <div className="flex items-center gap-4">
-          <span className="hidden text-[13px] font-medium text-[#B5B5B5] lg:inline-block">
-            {formattedDate}
+          <span className="hidden text-[11px] font-semibold text-[#7EE787] bg-[#7EE787]/10 border border-[#7EE787]/20 px-3 py-1 rounded-full lg:inline-block">
+            {getClubDisplayName()}
           </span>
 
           <div className="h-4 w-[1px] bg-white/10 hidden lg:block" />
@@ -157,9 +165,9 @@ export function TopNavigation() {
                 Profile
               </DropdownMenuItem>
 
-              <DropdownMenuItem onClick={() => router.push(user.role === 'admin' ? '/students' : '/leaderboard')} className="focus:bg-white/5 focus:text-white cursor-pointer gap-2">
+              <DropdownMenuItem onClick={() => router.push(user.role === 'super_admin' || user.role === 'coordinator' ? '/students' : '/leaderboard')} className="focus:bg-white/5 focus:text-white cursor-pointer gap-2">
                 <Grid className="h-4 w-4 text-[#B5B5B5]" />
-                {user.role === 'admin' ? 'Manage Students' : 'Leaderboard'}
+                {user.role === 'super_admin' || user.role === 'coordinator' ? 'Manage Members' : 'Leaderboard'}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator className="bg-white/5" />

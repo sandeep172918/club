@@ -20,7 +20,7 @@ interface Trick {
 export function TricksList() {
   const [tricks, setTricks] = useState<Trick[]>([]);
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "coordinator";
   const { socket } = useSocket();
 
   const fetchTricks = async () => {

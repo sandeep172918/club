@@ -5,7 +5,20 @@ import Notification from '@/models/Notification';
 export async function GET(req: NextRequest) {
   await dbConnect();
   try {
-    const notifications = await Notification.find().sort({ createdAt: -1 }).limit(20);
+    const { searchParams } = new URL(req.url);
+    const clubId = searchParams.get('clubId');
+
+    const filter: any = {
+      $or: [
+        { clubId: { $exists: false } },
+        { clubId: null },
+      ]
+    };
+    if (clubId && clubId !== 'all') {
+      filter.$or.push({ clubId });
+    }
+
+    const notifications = await Notification.find(filter).sort({ createdAt: -1 }).limit(20);
     return NextResponse.json({ success: true, data: notifications });
   } catch (error) {
     return NextResponse.json({ success: false, error }, { status: 400 });

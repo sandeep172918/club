@@ -5,7 +5,7 @@ import Student from '@/models/Student';
 import { ProcessedContestAttendance } from '@/types'; // Import the interface
 // import Contest from '@/models/Contest'; // No longer fetching all contests from local DB here
 
-export async function GET() {
+export async function GET(req: Request) {
   await dbConnect();
 
   try {
@@ -29,8 +29,17 @@ export async function GET() {
       date: new Date(contest.startTimeSeconds * 1000).toISOString(),
     }));
 
-    // 2. Fetch all student schemas
-    const students = await Student.find({ codeforcesHandle: { $exists: true, $ne: null } });
+    // 2. Fetch student schemas filtered by clubId
+    const { searchParams } = new URL(req.url);
+    const clubId = searchParams.get('clubId');
+    const filter: any = { codeforcesHandle: { $exists: true, $ne: null } };
+    if (clubId && clubId !== 'all') {
+      filter.clubId = clubId;
+      filter.clubJoinStatus = 'Approved';
+    } else {
+      filter.clubJoinStatus = 'Approved';
+    }
+    const students = await Student.find(filter);
 
     // 3. Process attendance into ProcessedContestAttendance format
     const processedAttendanceMap = new Map<string, ProcessedContestAttendance>();

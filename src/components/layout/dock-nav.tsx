@@ -16,7 +16,7 @@ export default function DockNav() {
     { href: "/potd", label: "POTD", icon: <VscVmActive size={25} /> },
     { href: "/upcoming-contests", label: "Contests", icon: <VscRocket size={25} /> },
     { href: "/resources", label: "Resources", icon: <VscBook size={25} /> },
-    user?.role === "admin"
+    (user?.role === "super_admin" || user?.role === "coordinator")
       ? { href: "/students", label: "Students", icon: <VscOrganization size={25} /> }
       : { href: "/profile", label: "Profile", icon: <VscPerson size={25} /> },
   ];

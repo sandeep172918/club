@@ -35,7 +35,7 @@ interface ProblemListProps {
 export function ProblemList({ problems, onUpdate }: ProblemListProps) {
   const { user, refreshUser } = useAuth();
   const { socket } = useSocket();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "super_admin" || user?.role === "coordinator";
 
   useEffect(() => {
     if (!socket) return;

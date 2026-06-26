@@ -17,10 +17,31 @@ export default function MainLayout({
   const isAuthPage = pathname ? authPages.includes(pathname) : false;
 
   useEffect(() => {
-    if (!loading && !user && !isAuthPage) {
-      router.push("/signin");
+    if (!loading) {
+      if (!user && !isAuthPage) {
+        router.push("/signin");
+      } else if (user) {
+        const hasClub = !!user.clubId;
+        const isApproved = user.role !== "student"; // coordinator, member, super_admin are approved
+
+        if (!isApproved) {
+          // If they are not approved, they can only access /profile or /join-club
+          if (pathname !== "/profile" && pathname !== "/join-club") {
+            if (hasClub) {
+              router.push("/profile");
+            } else {
+              router.push("/join-club");
+            }
+          }
+        } else {
+          // If they are approved, they shouldn't be on /join-club
+          if (pathname === "/join-club") {
+            router.push("/");
+          }
+        }
+      }
     }
-  }, [user, loading, isAuthPage, router]);
+  }, [user, loading, isAuthPage, pathname, router]);
 
   if (loading) {
      return (
@@ -37,7 +58,7 @@ export default function MainLayout({
     return null;
   }
 
-  if (isAuthPage) {
+  if (isAuthPage || pathname === "/join-club") {
     return <main className="bg-[#0B0B0B] min-h-screen text-white">{children}</main>;
   }
 

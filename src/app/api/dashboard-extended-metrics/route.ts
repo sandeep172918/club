@@ -6,13 +6,28 @@ import ClubContest from '@/models/ClubContest';
 import POTD from '@/models/POTD';
 import { subDays, format, startOfDay } from 'date-fns';
 
-export async function GET() {
+export async function GET(req: Request) {
   await dbConnect();
 
   try {
-    const students = await Student.find({});
+    const { searchParams } = new URL(req.url);
+    const clubId = searchParams.get('clubId');
+
+    const filter: any = {};
+    const clubContestFilter: any = {};
+    
+    if (clubId && clubId !== 'all') {
+      filter.clubId = clubId;
+      filter.clubJoinStatus = 'Approved';
+      clubContestFilter.clubId = clubId;
+    } else {
+      // By default only show approved members
+      filter.clubJoinStatus = 'Approved';
+    }
+
+    const students = await Student.find(filter);
     const upcomingContests = await Contest.find({}).sort({ date: 1 }).limit(3);
-    const clubContests = await ClubContest.find({}).sort({ date: 1 }).limit(3);
+    const clubContests = await ClubContest.find(clubContestFilter).sort({ date: 1 }).limit(3);
 
     // --- Basic Metrics ---
     const totalStudents = students.length;

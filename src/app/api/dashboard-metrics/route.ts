@@ -3,11 +3,21 @@ import dbConnect from '@/lib/db';
 import Student from '@/models/Student';
 import { subMonths } from 'date-fns'; // Removed subWeeks, startOfWeek, isWithinInterval
 
-export async function GET() {
+export async function GET(req: Request) {
   await dbConnect();
 
   try {
-    const students = await Student.find({});
+    const { searchParams } = new URL(req.url);
+    const clubId = searchParams.get('clubId');
+
+    const filter: any = {};
+    if (clubId && clubId !== 'all') {
+      filter.clubId = clubId;
+      filter.clubJoinStatus = 'Approved';
+    } else {
+      filter.clubJoinStatus = 'Approved';
+    }
+    const students = await Student.find(filter);
 
     // --- Skill Distribution ---
     let beginner = 0; // < 1400

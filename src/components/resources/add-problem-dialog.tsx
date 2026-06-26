@@ -45,10 +45,11 @@ export default function AddProblemDialog({
     setLoading(true);
     try {
         const role = user?.role || 'student';
-        const status = role === 'admin' ? 'approved' : 'pending';
+        const isAdminRole = role === 'super_admin' || role === 'coordinator';
+        const status = isAdminRole ? 'approved' : 'pending';
         
         let contributor = user?.name || user?.email?.split('@')[0] || "Anonymous";
-        if (role === 'admin') {
+        if (isAdminRole) {
             contributor = "Admin";
         }
 
@@ -63,7 +64,7 @@ export default function AddProblemDialog({
                 kind,
                 description,
                 contributor,
-                authorRole: role,
+                authorRole: isAdminRole ? 'admin' : 'student',
                 status
             })
         });

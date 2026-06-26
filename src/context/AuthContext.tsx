@@ -47,14 +47,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Sync with backend
         try {
+            const selectedClubId = typeof window !== 'undefined' ? localStorage.getItem('selected_club_id') : null;
             const res = await fetch("/api/auth/google", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: firebaseUser.displayName,
                     email: firebaseUser.email,
+                    clubId: selectedClubId || undefined,
                 }),
             });
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('selected_club_id');
+            }
             const { success, data } = await res.json();
             if (success) {
                 setUser(data);

@@ -11,6 +11,13 @@ import { ActivityCharts } from "@/components/dashboard/activity-charts";
 import { DifficultyBreakdown } from "@/components/dashboard/difficulty-breakdown";
 import { UpcomingContests } from "@/components/dashboard/upcoming-contests";
 import DecryptedText from "@/components/ui/decrypted-text";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface DashboardData {
   totalStudents: number;
@@ -45,12 +52,32 @@ export default function HomePage() {
   const [ratingHistory, setRatingHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [clubs, setClubs] = useState<any[]>([]);
+  const [selectedClubId, setSelectedClubId] = useState<string>("all");
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === "super_admin") {
+        fetch("/api/clubs")
+          .then(res => res.json())
+          .then(json => {
+            if (json.success) setClubs(json.data);
+          });
+      } else {
+        const cId = typeof user.clubId === 'object' && user.clubId ? (user.clubId as any)._id : user.clubId;
+        setSelectedClubId(cId || "all");
+      }
+    }
+  }, [user]);
 
   const fetchMetrics = useCallback(async () => {
     try {
+      const metricsUrl = `/api/dashboard-extended-metrics?clubId=${selectedClubId}`;
+      const historyUrl = `/api/club-rating-history?clubId=${selectedClubId}`;
+
       const [metricsRes, historyRes] = await Promise.all([
-        fetch("/api/dashboard-extended-metrics"),
-        fetch("/api/club-rating-history"),
+        fetch(metricsUrl),
+        fetch(historyUrl),
       ]);
 
       if (!metricsRes.ok || !historyRes.ok) {
@@ -75,7 +102,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedClubId]);
 
   useEffect(() => {
     fetchMetrics();
@@ -84,7 +111,6 @@ export default function HomePage() {
   useEffect(() => {
     if (!socket) return;
     const handleUpdate = (update: any) => {
-      // Trigger a soft refresh when socket reports changes
       if (['STUDENT_UPDATED', 'PROBLEM_ADDED', 'POTD_UPDATED', 'CONTEST_ADDED', 'STUDENT_DELETED', 'STUDENT_ADDED'].includes(update.type)) {
         fetchMetrics();
       }
@@ -94,6 +120,14 @@ export default function HomePage() {
       socket.off("data_update", handleUpdate);
     };
   }, [socket, fetchMetrics]);
+
+  // 30-second polling fallback auto-refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchMetrics();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchMetrics]);
 
   if (loading) {
     return (
@@ -149,24 +183,47 @@ export default function HomePage() {
     <div className="flex flex-col gap-10">
       
       {/* Hero Section */}
-      <div className="space-y-2 mt-4">
-        <div className="flex items-center gap-1">
-          <h1 className="text-[34px] sm:text-[42px] font-bold tracking-tight text-white leading-none">
-            {getGreeting()},
-          </h1>
-          <DecryptedText
-            text={firstName}
-            animateOn="view"
-            speed={80}
-            className="text-[34px] sm:text-[42px] font-bold tracking-tight text-[#7EE787] leading-none"
-          />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mt-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-1">
+            <h1 className="text-[34px] sm:text-[42px] font-bold tracking-tight text-white leading-none">
+              {getGreeting()},
+            </h1>
+            <DecryptedText
+              text={firstName}
+              animateOn="view"
+              speed={80}
+              className="text-[34px] sm:text-[42px] font-bold tracking-tight text-[#7EE787] leading-none"
+            />
+          </div>
+          <p className="text-[12px] font-semibold text-[#7A7A7A] uppercase tracking-widest">
+            {user?.role === "super_admin" ? "SaaS Platform Management" : "CP Club Dashboard"}
+          </p>
+          <p className="text-[14px] text-[#B5B5B5] max-w-xl">
+            {user?.role === "super_admin" 
+              ? "Comprehensive platform-wide view of competitive programming analytics."
+              : `Weekly overview of club performance and competitive programming analytics.`}
+          </p>
         </div>
-        <p className="text-[12px] font-semibold text-[#7A7A7A] uppercase tracking-widest">
-          CP Club Dashboard
-        </p>
-        <p className="text-[14px] text-[#B5B5B5] max-w-xl">
-          Weekly overview of club performance and competitive programming analytics.
-        </p>
+
+        {user?.role === "super_admin" && (
+          <div className="w-[240px]">
+            <span className="text-[10px] uppercase font-bold tracking-wider text-[#7A7A7A] block mb-2">View Analytics for</span>
+            <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+              <SelectTrigger className="bg-[#161616] border-white/5 text-white">
+                <SelectValue placeholder="All Clubs" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#161616] border-white/5 text-white">
+                <SelectItem value="all">🌐 All Clubs (Combined)</SelectItem>
+                {clubs.map((c) => (
+                  <SelectItem key={c._id} value={c._id!}>
+                    {c.logo || "🚀"} {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Row 1: KPI Stats */}

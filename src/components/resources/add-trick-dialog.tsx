@@ -34,7 +34,8 @@ export default function AddTrickDialog({
     setLoading(true);
     try {
         const role = user?.role || 'student';
-        const status = role === 'admin' ? 'approved' : 'pending';
+        const isAdminRole = role === 'super_admin' || role === 'coordinator';
+        const status = isAdminRole ? 'approved' : 'pending';
 
         await fetch("/api/tricks", {
             method: "POST",
@@ -43,7 +44,7 @@ export default function AddTrickDialog({
                 title,
                 description,
                 author: user?.name || user?.email || "Anonymous",
-                authorRole: role,
+                authorRole: isAdminRole ? 'admin' : 'student',
                 status
             })
         });

@@ -3,11 +3,21 @@ import dbConnect from '@/lib/db';
 import Student from '@/models/Student';
 import { eachDayOfInterval, format, subDays } from 'date-fns';
 
-export async function GET() {
+export async function GET(req: Request) {
   await dbConnect();
 
   try {
-    const students = await Student.find({});
+    const { searchParams } = new URL(req.url);
+    const clubId = searchParams.get('clubId');
+
+    const filter: any = {};
+    if (clubId && clubId !== 'all') {
+      filter.clubId = clubId;
+      filter.clubJoinStatus = 'Approved';
+    } else {
+      filter.clubJoinStatus = 'Approved';
+    }
+    const students = await Student.find(filter);
 
     const today = new Date();
     const dates: Date[] = [];

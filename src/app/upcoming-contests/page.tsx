@@ -15,7 +15,8 @@ function UpcomingContestsPage() {
   const { socket } = useSocket();
 
   const fetchContests = async () => {
-    const res = await fetch("/api/club-contests");
+    const clubId = typeof user?.clubId === 'object' && user?.clubId ? (user.clubId as any)._id : (user?.clubId || "all");
+    const res = await fetch(`/api/club-contests?clubId=${clubId}`);
     const { data } = await res.json();
     setContests(data);
   };
@@ -37,6 +38,14 @@ function UpcomingContestsPage() {
     };
   }, [socket]);
 
+  // 30-second polling fallback auto-refresh
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchContests();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   const handleAddContest = async (contestData: {
     name: string;
     link: string;
@@ -48,7 +57,10 @@ function UpcomingContestsPage() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(contestData),
+      body: JSON.stringify({
+        ...contestData,
+        clubId: typeof user?.clubId === 'object' && user?.clubId ? (user.clubId as any)._id : user?.clubId,
+      }),
     });
     fetchContests(); // Refresh the list
   };
@@ -67,7 +79,7 @@ function UpcomingContestsPage() {
             Contests organized by your club.
           </p>
         </div>
-        {user?.role === "admin" && (
+        {(user?.role === "super_admin" || user?.role === "coordinator") && (
           <AddClubContestDialog onAddContest={handleAddContest} />
         )}
       </div>

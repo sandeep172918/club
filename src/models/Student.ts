@@ -17,8 +17,28 @@ const StudentSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['admin', 'student'],
+    enum: ['super_admin', 'coordinator', 'member', 'student'],
     default: 'student',
+  },
+  clubId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Club',
+    required: false,
+  },
+  clubJoinStatus: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected', 'None'],
+    default: 'None',
+  },
+  requestedRole: {
+    type: String,
+    enum: ['member', 'coordinator'],
+    required: false,
+  },
+  roleRequestStatus: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected', 'None'],
+    default: 'None',
   },
   codeforcesHandle: {
     type: String,
@@ -82,3 +102,4 @@ if (mongoose.models && mongoose.models.Student) {
 }
 
 export default mongoose.models.Student || mongoose.model('Student', StudentSchema);
+

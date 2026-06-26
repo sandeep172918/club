@@ -28,7 +28,7 @@ export default function POTDPage() {
   const { toast } = useToast();
   const { socket } = useSocket();
 
-  const isAdmin = user?.role === 'admin' || (user?.email === 'cp.cpp.club@gmail.com'); 
+  const isAdmin = user?.role === 'super_admin' || user?.role === 'coordinator' || (user?.email === 'cp.cpp.club@gmail.com'); 
 
   const fetchPOTDs = async () => {
     try {

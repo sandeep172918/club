@@ -4,7 +4,7 @@ export interface Student {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'student';
+  role: 'super_admin' | 'coordinator' | 'member' | 'student';
   codeforcesHandle?: string;
   currentRating: number;
   favoriteLanguage?: string;
@@ -15,8 +15,12 @@ export interface Student {
   points: number;
   solvedPOTDs?: string[];
   solvedResources?: string[];
-  ratingHistory: { contestId: string; rating: number; change: number }[];
+  ratingHistory: { contestId: string; rating: number; change: number; contestName?: string; timestamp?: string }[];
   contestParticipation: { contestId: string; participated: boolean }[];
+  clubId?: string;
+  clubJoinStatus?: 'Pending' | 'Approved' | 'Rejected' | 'None';
+  requestedRole?: 'member' | 'coordinator';
+  roleRequestStatus?: 'Pending' | 'Approved' | 'Rejected' | 'None';
 }
 
 export interface Contest {
@@ -66,6 +70,31 @@ export interface Topic {
   id: string;
   title: string;
   description: string;
+}
+
+export interface Club {
+  _id?: string;
+  name: string;
+  slug: string;
+  type: 'official' | 'fan';
+  description?: string;
+  coordinators: string[]; // User IDs
+  logo?: string;
+  bannerColor?: string;
+  isActive?: boolean;
+  requestedCoordinatorEmail?: string;
+  createdAt?: string;
+}
+
+export interface VolunteerLog {
+  _id?: string;
+  studentId: string;
+  studentName: string;
+  clubId: string;
+  role: string;
+  description: string;
+  hours: number;
+  date: string;
 }
 
 declare global {

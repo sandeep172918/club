@@ -18,6 +18,11 @@ const NotificationSchema = new mongoose.Schema({
   createdBy: {
     type: String, // Store admin name or ID
   },
+  clubId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Club',
+    required: false,
+  },
 });
 
 export default mongoose.models.Notification || mongoose.model('Notification', NotificationSchema);

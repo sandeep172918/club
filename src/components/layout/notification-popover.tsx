@@ -50,11 +50,12 @@ export function NotificationPopover() {
   const [message, setMessage] = useState("");
   const [type, setType] = useState<'info' | 'warning' | 'urgent'>("info");
 
-  const isAdmin = user?.role === "admin" || (user?.email === 'cp.cpp.club@gmail.com');
+  const isAdmin = user?.role === "super_admin" || user?.role === "coordinator" || (user?.email === 'cp.cpp.club@gmail.com');
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch("/api/notifications");
+      const clubId = typeof user?.clubId === 'object' && user?.clubId ? (user.clubId as any)._id : (user?.clubId || "all");
+      const res = await fetch(`/api/notifications?clubId=${clubId}`);
       const data = await res.json();
       if (data.success) {
         setNotifications(data.data);
@@ -91,7 +92,12 @@ export function NotificationPopover() {
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, type, createdBy: user?.name }),
+        body: JSON.stringify({ 
+          message, 
+          type, 
+          createdBy: user?.name,
+          clubId: user?.role === 'coordinator' ? (typeof user.clubId === 'object' && user.clubId ? (user.clubId as any)._id : user.clubId) : undefined
+        }),
       });
       
       const data = await res.json();
