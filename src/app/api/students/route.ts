@@ -9,28 +9,42 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const clubId = searchParams.get('clubId');
-    const clubJoinStatus = searchParams.get('clubJoinStatus');
+    const clubJoinStatus = searchParams.get('clubJoinStatus') || (clubId && clubId !== 'all' ? 'Approved' : undefined);
 
     const filter: any = {};
     if (clubId && clubId !== 'all') {
-      filter.clubId = clubId;
-    }
-    if (clubJoinStatus) {
-      filter.clubJoinStatus = clubJoinStatus;
-    } else if (clubId && clubId !== 'all') {
-      filter.clubJoinStatus = 'Approved';
-    }
-
-    const roleRequestStatus = searchParams.get('roleRequestStatus');
-    if (roleRequestStatus) {
-      filter.roleRequestStatus = roleRequestStatus;
-      // Overwrite the automatic clubJoinStatus = 'Approved' default if roleRequestStatus is queried
-      if (!clubJoinStatus) {
-        delete filter.clubJoinStatus;
+      if (clubJoinStatus) {
+        if (clubJoinStatus === 'Approved') {
+          filter.$or = [
+            { clubs: { $elemMatch: { clubId: clubId, status: 'Approved' } } },
+            { clubId: clubId, role: 'coordinator' }
+          ];
+        } else {
+          filter.clubs = {
+            $elemMatch: {
+              clubId: clubId,
+              status: clubJoinStatus
+            }
+          };
+        }
+      } else {
+        filter.$or = [
+          { "clubs.clubId": clubId },
+          { clubId: clubId }
+        ];
+      }
+    } else if (clubJoinStatus) {
+      if (clubJoinStatus === 'Approved') {
+        filter.$or = [
+          { "clubs.status": 'Approved' },
+          { role: 'coordinator' }
+        ];
+      } else {
+        filter["clubs.status"] = clubJoinStatus;
       }
     }
 
-    const students = await Student.find(filter);
+    const students = await Student.find(filter).populate('clubs.clubId').populate('clubId');
     return NextResponse.json({ success: true, data: students });
   } catch (error) {
     return NextResponse.json({ success: false, error }, { status: 400 });

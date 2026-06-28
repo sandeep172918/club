@@ -21,6 +21,7 @@ export default function SigninPage() {
   const [isOpen, setIsOpen] = useState(false);
 
   // Club registration state
+  const [showOfficialWarning, setShowOfficialWarning] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [regClubName, setRegClubName] = useState("");
   const [regCoordinatorEmail, setRegCoordinatorEmail] = useState("");
@@ -89,7 +90,12 @@ export default function SigninPage() {
     if (typeof window !== "undefined") {
       localStorage.setItem("selected_club_id", selectedClub._id || "");
     }
-    signInWithGoogle();
+    
+    if (selectedClub.type === 'official') {
+      setShowOfficialWarning(true);
+    } else {
+      signInWithGoogle();
+    }
   };
 
   // Fetch active clubs and calculate mock member counts or fetch real counts
@@ -539,6 +545,61 @@ export default function SigninPage() {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Official Club Warning Modal */}
+      <AnimatePresence>
+        {showOfficialWarning && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowOfficialWarning(false)}
+              className="absolute inset-0 bg-black"
+            />
+
+            {/* Modal Content */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#161616] border border-white/5 w-full max-w-sm rounded-2xl p-6 shadow-2xl relative z-10 space-y-4 text-white text-center"
+            >
+              <div className="mx-auto h-12 w-12 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+                <Info className="h-6 w-6 text-amber-400" />
+              </div>
+              
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-white tracking-tight">Membership Request Required</h3>
+                <p className="text-xs text-[#7A7A7A] leading-relaxed">
+                  You have selected an <strong>Official Club</strong>. You will need to submit a request for membership from your profile page after logging in to gain full access.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowOfficialWarning(false)}
+                  className="flex-1 py-2.5 bg-transparent border border-white/5 hover:bg-white/5 rounded-xl text-xs text-[#B5B5B5] hover:text-white transition-colors font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowOfficialWarning(false);
+                    signInWithGoogle();
+                  }}
+                  className="flex-1 py-2.5 bg-white text-black hover:bg-neutral-200 rounded-xl text-xs font-bold transition-colors shadow-md"
+                >
+                  Proceed to Login
+                </button>
+              </div>
             </motion.div>
           </div>
         )}

@@ -19,8 +19,10 @@ export interface Student {
   contestParticipation: { contestId: string; participated: boolean }[];
   clubId?: string;
   clubJoinStatus?: 'Pending' | 'Approved' | 'Rejected' | 'None';
+  clubs?: { clubId: any; status: 'Pending' | 'Approved' | 'Rejected' | 'None' }[];
   requestedRole?: 'member' | 'coordinator';
   roleRequestStatus?: 'Pending' | 'Approved' | 'Rejected' | 'None';
+  lastSyncedCodeforces?: string;
 }
 
 export interface Contest {

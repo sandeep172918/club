@@ -27,44 +27,6 @@ function ProfilePage() {
   const [loadingLogs, setLoadingLogs] = useState(true);
   const [submittingRequest, setSubmittingRequest] = useState(false);
 
-  const handleRoleRequest = async (requestedRole: 'member' | 'coordinator') => {
-    if (!user?._id) return;
-    setSubmittingRequest(true);
-    try {
-      const res = await fetch(`/api/students/${user._id}/role-request`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ requestedRole }),
-      });
-      const result = await res.json();
-      if (result.success) {
-        await refreshUser();
-        socket?.emit("data_update", { type: "STUDENT_UPDATED" });
-        toast({
-          title: "Request Submitted",
-          description: `Successfully requested the ${requestedRole} tag!`,
-        });
-      } else {
-        toast({
-          title: "Request Failed",
-          description: result.error || "Failed to submit request.",
-          variant: "destructive",
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
-    } finally {
-      setSubmittingRequest(false);
-    }
-  };
-
   useEffect(() => {
     if (user && user._id) {
       fetch(`/api/volunteers?studentId=${user._id}`)
@@ -219,14 +181,19 @@ function ProfilePage() {
                 <h2 className="text-3xl font-extrabold text-white">
                   {user?.name}
                 </h2>
+                {!user?.codeforcesHandle && (
+                  <div className="text-xs font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-lg mt-1.5 inline-block animate-pulse">
+                    ⚠️ Add your CF ID in profile section
+                  </div>
+                )}
                 <p className="text-sm text-[#7A7A7A]">{user?.email}</p>
                 <div className="mt-2 flex flex-wrap justify-center gap-2">
                   <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/5 text-white">
-                    {user?.role === "super_admin" ? "Owner (Super Admin)" : user?.role}
+                    {user?.role === "super_admin" ? "Owner (Super Admin)" : user?.role === "coordinator" ? "Coordinator" : user?.role === "member" ? "Member" : "Student"}
                   </span>
-                  {user?.clubId && (
+                  {user?.clubId && user.clubJoinStatus === 'Approved' && (
                     <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-[#7EE787]/10 border border-[#7EE787]/20 text-[#7EE787]">
-                      Club Member
+                      {typeof user.clubId === 'object' ? (user.clubId as any).name : "Club Member"}
                     </span>
                   )}
                 </div>
@@ -260,52 +227,165 @@ function ProfilePage() {
               </div>
             </div>
 
-            {/* Tag Upgrade Request Section */}
-            {(user?.role === 'student' || user?.role === 'member') && (
+            {/* Membership Request Section */}
+            {user?.role === 'student' && user.clubId && (
               <div className="mt-8 border-t border-white/5 pt-8 space-y-4">
                 <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                  Request Tag Upgrade
+                  Club Membership Status
                 </h3>
                 
-                {user?.roleRequestStatus === 'Pending' ? (
-                  <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 flex flex-col gap-1.5">
-                    <span className="text-xs font-bold text-amber-400">Request Pending Approval</span>
-                    <p className="text-[11px] text-[#B5B5B5] leading-relaxed">
-                      Your request to get the <span className="text-white font-semibold uppercase">{user.requestedRole}</span> tag is currently being reviewed.
-                      {user.requestedRole === 'member' 
-                        ? ' Club coordinators and super admins can approve member tags.'
-                        : ' Only the super admin can approve coordinator tags.'
-                      }
-                    </p>
+                <div className="rounded-xl bg-[#161616] border border-white/5 p-4 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xl">
+                      {typeof user.clubId === 'object' && user.clubId ? (user.clubId as any).logo || "🚀" : "🚀"}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-semibold text-white">
+                        {typeof user.clubId === 'object' && user.clubId ? (user.clubId as any).name : "Selected Club"}
+                      </h4>
+                      <p className="text-xs text-[#7A7A7A] uppercase tracking-wider">
+                        {typeof user.clubId === 'object' && user.clubId ? (user.clubId as any).type : "Club"}
+                      </p>
+                    </div>
                   </div>
+
+                  <div>
+                    {user.clubJoinStatus === 'Pending' ? (
+                      <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg">
+                        Pending Approval
+                      </span>
+                    ) : user.clubJoinStatus === 'Rejected' ? (
+                      <span className="text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
+                        Request Rejected
+                      </span>
+                    ) : (
+                      <span className="text-xs font-bold text-neutral-400 bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg">
+                        Not a Member
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {user.clubJoinStatus === 'Pending' ? (
+                  <p className="text-xs text-[#B5B5B5] leading-relaxed">
+                    Your request to join this club has been sent and is currently pending approval by the club coordinator.
+                  </p>
                 ) : (
                   <div className="space-y-3">
                     <p className="text-xs text-[#7A7A7A] leading-relaxed">
-                      Need a role upgrade? Request the appropriate tag below to get more access on the platform.
+                      {user.clubJoinStatus === 'Rejected' 
+                        ? "Your previous join request was rejected. You can submit another request to join this club."
+                        : "To access all CP.cpp features, dashboards, and participate in contests, you must request and be granted membership in this club."
+                      }
                     </p>
-                    
-                    {user?.roleRequestStatus === 'Rejected' && (
-                      <p className="text-xs text-red-400 font-medium">
-                        Your previous request was rejected. Feel free to re-apply if needed.
-                      </p>
-                    )}
 
-                    <div className="flex flex-wrap gap-3">
-                      {user.role === 'student' && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          disabled={submittingRequest}
-                          onClick={() => handleRoleRequest('member')}
-                          className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/20 rounded-xl text-xs font-semibold px-4 py-2"
-                        >
-                          Request Member Tag
-                        </Button>
-                      )}
-                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={submittingRequest}
+                      onClick={async () => {
+                        if (!user?._id) return;
+                        setSubmittingRequest(true);
+                        const targetClubId = typeof user.clubId === 'object' && user.clubId ? (user.clubId as any)._id : user.clubId;
+                        try {
+                          const res = await fetch(`/api/clubs/${targetClubId}/join`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ studentId: user._id }),
+                          });
+                          const json = await res.json();
+                          if (json.success) {
+                            await refreshUser();
+                            socket?.emit("data_update", { type: "STUDENT_UPDATED" });
+                            toast({
+                              title: "Request Submitted",
+                              description: "Successfully requested membership!",
+                            });
+                          } else {
+                            toast({
+                              title: "Request Failed",
+                              description: json.error || "Failed to submit request.",
+                              variant: "destructive",
+                            });
+                          }
+                        } catch (err) {
+                          toast({
+                            title: "Error",
+                            description: "An unexpected error occurred.",
+                            variant: "destructive",
+                          });
+                        } finally {
+                          setSubmittingRequest(false);
+                        }
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-semibold px-4 py-2"
+                    >
+                      {submittingRequest ? "Submitting..." : "Request Membership"}
+                    </Button>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* My Clubs List Section */}
+            {user?.role !== 'super_admin' && user?.clubs && user.clubs.length > 0 && (
+              <div className="mt-8 border-t border-white/5 pt-8 space-y-4">
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  My Club Memberships
+                </h3>
+                
+                <div className="space-y-3">
+                  {user.clubs.map((c: any) => {
+                    const clubObj = c.clubId;
+                    if (!clubObj) return null;
+                    const isCoordinatorOfThisClub = clubObj.coordinators?.some((coordId: any) => {
+                      const cid = coordId && coordId._id ? coordId._id.toString() : (coordId ? coordId.toString() : '');
+                      return cid === user._id?.toString();
+                    });
+                    
+                    return (
+                      <div key={clubObj._id} className="rounded-xl bg-[#161616]/40 border border-white/5 p-4 flex items-center justify-between gap-4 hover:border-white/10 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-xl">
+                            {clubObj.logo || "🚀"}
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-white">
+                              {clubObj.name}
+                            </h4>
+                            <p className="text-xs text-[#7A7A7A] uppercase tracking-wider">
+                              {clubObj.type} Club
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          {isCoordinatorOfThisClub ? (
+                            <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg">
+                              Coordinator
+                            </span>
+                          ) : c.status === 'Approved' ? (
+                            <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg">
+                              Member (Approved)
+                            </span>
+                          ) : c.status === 'Pending' ? (
+                            <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-lg">
+                              Requested (Pending)
+                            </span>
+                          ) : c.status === 'Rejected' ? (
+                            <span className="text-xs font-bold text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-lg">
+                              Rejected
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-neutral-400 bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg">
+                              Not Joined
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </CardContent>

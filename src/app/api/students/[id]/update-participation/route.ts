@@ -13,6 +13,23 @@ export async function POST(
   await dbConnect();
 
   try {
+    const student = await Student.findById(params.id);
+    if (!student) {
+      return NextResponse.json(
+        { success: false, error: 'Student not found' },
+        { status: 404 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const force = searchParams.get('force') === 'true';
+
+    // Cache Codeforces data for 1 hour to prevent API throttling (unless forced)
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (!force && student.lastSyncedCodeforces && (Date.now() - new Date(student.lastSyncedCodeforces).getTime() < ONE_HOUR)) {
+      return NextResponse.json({ success: true, cached: true, data: student });
+    }
+
     // Use the centralized utility function to update participation
     await updateStudentParticipation(params.id);
 
@@ -24,6 +41,10 @@ export async function POST(
         { status: 404 }
       );
     }
+
+    // Update the sync timestamp
+    updatedStudent.lastSyncedCodeforces = new Date();
+    await updatedStudent.save();
 
     return NextResponse.json({ success: true, data: updatedStudent });
   } catch (error) {

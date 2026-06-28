@@ -21,12 +21,29 @@ export async function POST(req: NextRequest, context: any) {
       return NextResponse.json({ success: false, error: 'Student not found' }, { status: 404 });
     }
 
-    // Set student's club to this one and set status to Pending
+    const isFanClub = club.type === 'fan';
+    const newStatus = isFanClub ? 'Approved' : 'Pending';
+
+    // Set student's club to this one and set status
     student.clubId = club._id;
-    student.clubJoinStatus = 'Pending';
-    // If they were coordinator or member of another club, demote to student role while pending approval
-    if (student.role !== 'super_admin') {
-      student.role = 'student';
+    student.clubJoinStatus = newStatus;
+    
+    // Sync with clubs array
+    if (!student.clubs) {
+      student.clubs = [];
+    }
+    const clubRecord = student.clubs.find(
+      (c: any) => c.clubId.toString() === club._id.toString()
+    );
+    if (clubRecord) {
+      clubRecord.status = newStatus;
+    } else {
+      student.clubs.push({ clubId: club._id, status: newStatus });
+    }
+
+    // Set their role based on approval status
+    if (student.role !== 'super_admin' && student.role !== 'coordinator') {
+      student.role = isFanClub ? 'member' : 'student';
     }
     
     await student.save();

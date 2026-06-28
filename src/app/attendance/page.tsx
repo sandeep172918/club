@@ -2,7 +2,7 @@
 
 import AttendanceTable from "@/components/attendance/attendance-table";
 import { useEffect, useState } from "react";
-import { ProcessedContestAttendance, Student } from "@/types";
+import { ProcessedContestAttendance, Student, Club } from "@/types";
 import { Button } from "@/components/ui/button"; // Import Button
 import { useAuth } from "@/context/AuthContext"; // Import useAuth
 import { useSocket } from "@/context/SocketContext";
@@ -22,13 +22,17 @@ function AttendancePage() {
   const [selectedYear, setSelectedYear] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [syncingContests, setSyncingContests] = useState(false);
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [selectedClubId, setSelectedClubId] = useState<string>("all");
   const { socket } = useSocket();
 
   const fetchData = async () => {
     setError(null);
     try {
-      const clubId = typeof user?.clubId === 'object' && user?.clubId ? (user.clubId as any)._id : (user?.clubId || "all");
+      const clubId = user?.role === "super_admin" 
+        ? selectedClubId 
+        : (typeof user?.clubId === 'object' && user?.clubId ? (user.clubId as any)._id : (user?.clubId || "none"));
+
       const resAttendance = await fetch(`/api/attendance?clubId=${clubId}`);
       if (!resAttendance.ok) {
         throw new Error(`HTTP error! status: ${resAttendance.status}`);
@@ -50,8 +54,18 @@ function AttendancePage() {
   };
 
   useEffect(() => {
+    if (user?.role === "super_admin") {
+      fetch("/api/clubs?all=true")
+        .then(res => res.json())
+        .then(json => {
+          if (json.success) setClubs(json.data);
+        });
+    }
+  }, [user]);
+
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, [selectedClubId, user]);
 
   useEffect(() => {
     if (!socket) return;
@@ -83,23 +97,7 @@ function AttendancePage() {
   };
 
 
-  const handleSyncContests = async () => {
-    setSyncingContests(true);
-    setError(null);
-    try {
-      const res = await fetch("/api/contests", { method: "GET" });
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      // After syncing contests in the local DB, refetch attendance data to potentially show new contests
-      await fetchData();
-      socket?.emit('data_update', { type: 'ATTENDANCE_UPDATED' });
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setSyncingContests(false);
-    }
-  };
+
 
   const filteredStudents = students.filter((student) => {
     if (selectedYear === "All") return true;
@@ -132,6 +130,23 @@ function AttendancePage() {
           </p>
         </div>
         <div className="flex flex-col md:flex-row items-end md:items-center gap-4 mt-4 md:mt-0">
+          {user?.role === "super_admin" && (
+            <div className="w-[200px]">
+              <Select value={selectedClubId} onValueChange={setSelectedClubId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by Club" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Clubs</SelectItem>
+                  {clubs.map((club) => (
+                    <SelectItem key={club._id} value={club._id!}>
+                      {club.logo || "🚀"} {club.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="w-[180px]">
             <Select value={selectedYear} onValueChange={setSelectedYear}>
               <SelectTrigger>
@@ -151,16 +166,6 @@ function AttendancePage() {
               </SelectContent>
             </Select>
           </div>
-          {(user?.role === "super_admin" || user?.role === "coordinator") && (
-            <div className="flex space-x-2">
-              <Button
-                onClick={handleSyncContests}
-                disabled={syncingContests}
-              >
-                {syncingContests ? "Syncing..." : "Sync Contests"}
-              </Button>
-            </div>
-          )}
         </div>
       </div>
       <AttendanceTable attendanceData={attendanceData} students={filteredStudents} />

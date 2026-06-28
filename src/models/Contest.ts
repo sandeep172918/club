@@ -20,6 +20,6 @@ const ContestSchema = new mongoose.Schema({
     type: String, // Changed to string to match CodeforcesContest interface
     required: true,
   },
-});
+}, { timestamps: true });
 
 export default mongoose.models.Contest || mongoose.model('Contest', ContestSchema);

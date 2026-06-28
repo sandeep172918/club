@@ -226,7 +226,7 @@ export default function JoinClubPage() {
                       {/* Join Button */}
                       <Button
                         onClick={() => handleJoinRequest(club._id!)}
-                        disabled={submitting !== null || isSelected}
+                        disabled={submitting !== null}
                         className="w-full justify-between items-center rounded-xl bg-white text-black hover:bg-neutral-200 transition-colors py-5"
                       >
                         <span className="text-xs font-semibold">

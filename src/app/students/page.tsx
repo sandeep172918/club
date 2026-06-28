@@ -25,7 +25,6 @@ import {
   Building, 
   Plus, 
   Trash2, 
-  Shield, 
   Check, 
   X, 
   Award,
@@ -56,7 +55,6 @@ export default function StudentsPage() {
   // Members lists
   const [approvedMembers, setApprovedMembers] = useState<Student[]>([]);
   const [pendingRequests, setPendingRequests] = useState<Student[]>([]);
-  const [roleRequests, setRoleRequests] = useState<Student[]>([]);
   
   // All students list (for coordinator assignment selector)
   const [allStudents, setAllStudents] = useState<Student[]>([]);
@@ -137,31 +135,6 @@ export default function StudentsPage() {
     }
   }, [user, selectedClubId, userClubIdStr]);
 
-  // Fetch role/tag upgrade requests
-  const fetchRoleRequests = useCallback(async () => {
-    if (!user) return;
-    let targetClubId = selectedClubId;
-    if (user.role === "coordinator") {
-      targetClubId = userClubIdStr;
-    }
-
-    try {
-      const url = `/api/students?roleRequestStatus=Pending${targetClubId && targetClubId !== 'all' ? `&clubId=${targetClubId}` : ''}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.success) {
-        let data = json.data;
-        // If coordinator, filter out coordinator requests (only super admin can approve coordinators)
-        if (user.role === "coordinator") {
-          data = data.filter((s: Student) => s.requestedRole === 'member');
-        }
-        setRoleRequests(data);
-      }
-    } catch (error) {
-      console.error("Error fetching role requests:", error);
-    }
-  }, [user, selectedClubId, userClubIdStr]);
-
   useEffect(() => {
     if (user) {
       if (user.role === "coordinator" && userClubIdStr) {
@@ -175,9 +148,8 @@ export default function StudentsPage() {
   useEffect(() => {
     if (user) {
       fetchMembers();
-      fetchRoleRequests();
     }
-  }, [selectedClubId, user, fetchMembers, fetchRoleRequests]);
+  }, [selectedClubId, user, fetchMembers]);
 
   // Socket updates listener
   useEffect(() => {
@@ -185,7 +157,6 @@ export default function StudentsPage() {
     const handleUpdate = (update: any) => {
       if (["STUDENT_UPDATED", "STUDENT_ADDED", "STUDENT_DELETED", "CLUB_UPDATED"].includes(update.type)) {
         fetchMembers();
-        fetchRoleRequests();
         fetchClubs();
         fetchAllStudents();
       }
@@ -194,22 +165,21 @@ export default function StudentsPage() {
     return () => {
       socket.off("data_update", handleUpdate);
     };
-  }, [socket, fetchMembers, fetchRoleRequests]);
+  }, [socket, fetchMembers]);
 
   // 30-second polling fallback auto-refresh
   useEffect(() => {
     const interval = setInterval(() => {
       fetchMembers();
-      fetchRoleRequests();
       fetchClubs();
       fetchAllStudents();
     }, 30000);
     return () => clearInterval(interval);
-  }, [fetchMembers, fetchRoleRequests]);
+  }, [fetchMembers]);
 
   // Handle Join request action (Approve/Reject)
-  const handleRequestAction = async (studentId: string, action: "approve" | "reject") => {
-    let clubId = selectedClubId;
+  const handleRequestAction = async (studentId: string, action: "approve" | "reject", studentClubId?: string) => {
+    let clubId = studentClubId || selectedClubId;
     if (user?.role === "coordinator") {
       clubId = userClubIdStr;
     }
@@ -247,41 +217,7 @@ export default function StudentsPage() {
     }
   };
 
-  // Handle Role request action (Approve/Reject)
-  const handleRoleApprovalAction = async (studentId: string, action: "approve" | "reject") => {
-    setActionLoading(studentId);
-    try {
-      const res = await fetch(`/api/students/${studentId}/approve-role`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        toast({
-          title: action === "approve" ? "Role Approved" : "Role Rejected",
-          description: `Successfully ${action === "approve" ? "approved" : "rejected"} the role upgrade request.`,
-        });
-        fetchRoleRequests();
-        fetchMembers();
-        socket?.emit("data_update", { type: "STUDENT_UPDATED" });
-      } else {
-        toast({
-          title: "Action Failed",
-          description: json.error || "Failed to process role upgrade.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred.",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
+
 
   // Create new club (Super Admin)
   const handleCreateClub = async (e: React.FormEvent) => {
@@ -443,15 +379,7 @@ export default function StudentsPage() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="role-requests" className="data-[state=active]:bg-[#222] data-[state=active]:text-white rounded-lg px-4 py-2 text-xs font-semibold gap-2 relative">
-            <Shield className="h-4 w-4 text-[#7EE787]" />
-            Role Requests
-            {roleRequests.length > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce">
-                {roleRequests.length}
-              </span>
-            )}
-          </TabsTrigger>
+
           {user.role === "super_admin" && (
             <TabsTrigger value="clubs" className="data-[state=active]:bg-[#222] data-[state=active]:text-white rounded-lg px-4 py-2 text-xs font-semibold gap-2">
               <Building className="h-4 w-4 text-[#7EE787]" />
@@ -479,6 +407,7 @@ export default function StudentsPage() {
                   <TableHead className="text-[#7A7A7A]">Name</TableHead>
                   <TableHead className="text-[#7A7A7A]">Email ID</TableHead>
                   <TableHead className="text-[#7A7A7A]">CF Handle</TableHead>
+                  {selectedClubId === "all" && <TableHead className="text-[#7A7A7A]">Clubs</TableHead>}
                   <TableHead className="text-[#7A7A7A]">Role</TableHead>
                   <TableHead className="text-[#7A7A7A]">Points</TableHead>
                   <TableHead className="text-right text-[#7A7A7A]">Actions</TableHead>
@@ -520,6 +449,39 @@ export default function StudentsPage() {
                           <span className="text-[#7A7A7A] text-xs italic">Unlinked</span>
                         )}
                       </TableCell>
+                      {selectedClubId === "all" && (
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1.5 max-w-[220px]">
+                            {member.clubs && member.clubs.filter((c: any) => c.status === 'Approved').map((c: any) => {
+                              const clb = c.clubId;
+                              if (!clb) return null;
+                              return (
+                                <span key={clb._id} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/5 text-neutral-300 inline-flex items-center gap-1">
+                                  {clb.logo || "🚀"} {clb.name}
+                                </span>
+                              );
+                            })}
+                            {member.role === 'coordinator' && member.clubId && (
+                              (() => {
+                                const clb = member.clubId as any;
+                                const clbId = typeof clb === 'object' && clb ? clb._id : clb;
+                                const isAlreadyShown = member.clubs && member.clubs.some((c: any) => {
+                                  const cClubId = typeof c.clubId === 'object' && c.clubId ? c.clubId._id : c.clubId;
+                                  return c.status === 'Approved' && cClubId === clbId;
+                                });
+                                if (isAlreadyShown) return null;
+                                const logo = typeof clb === 'object' && clb ? clb.logo : "🚀";
+                                const name = typeof clb === 'object' && clb ? clb.name : "Coordinator";
+                                return (
+                                  <span key={clbId} className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 text-amber-400 inline-flex items-center gap-1">
+                                    {logo || "🚀"} {name || "Coordinator"}
+                                  </span>
+                                );
+                              })()
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
                       <TableCell>
                         <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
                           member.role === "super_admin" 
@@ -584,6 +546,7 @@ export default function StudentsPage() {
                   <TableHead className="text-[#7A7A7A]">Student Name</TableHead>
                   <TableHead className="text-[#7A7A7A]">Email ID</TableHead>
                   <TableHead className="text-[#7A7A7A]">CF Handle</TableHead>
+                  {selectedClubId === "all" && <TableHead className="text-[#7A7A7A]">Requested Club</TableHead>}
                   <TableHead className="text-right text-[#7A7A7A]">Approve / Reject</TableHead>
                 </TableRow>
               </TableHeader>
@@ -616,12 +579,24 @@ export default function StudentsPage() {
                           <span className="text-[#7A7A7A] text-xs italic">Unlinked</span>
                         )}
                       </TableCell>
+                      {selectedClubId === "all" && (
+                        <TableCell>
+                          {student.clubId ? (
+                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white/5 border border-white/5 text-neutral-300 inline-flex items-center gap-1">
+                              {typeof student.clubId === 'object' ? (student.clubId as any).logo || "🚀" : "🚀"}{" "}
+                              {typeof student.clubId === 'object' ? (student.clubId as any).name : "Club"}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-[#7A7A7A] italic">None</span>
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             size="sm"
                             disabled={actionLoading !== null}
-                            onClick={() => handleRequestAction(student._id!, "approve")}
+                            onClick={() => handleRequestAction(student._id!, "approve", typeof student.clubId === 'object' && student.clubId ? (student.clubId as any)._id : student.clubId)}
                             className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg h-8 text-xs gap-1.5"
                           >
                             <Check className="h-3.5 w-3.5" />
@@ -631,7 +606,7 @@ export default function StudentsPage() {
                             size="sm"
                             variant="destructive"
                             disabled={actionLoading !== null}
-                            onClick={() => handleRequestAction(student._id!, "reject")}
+                            onClick={() => handleRequestAction(student._id!, "reject", typeof student.clubId === 'object' && student.clubId ? (student.clubId as any)._id : student.clubId)}
                             className="rounded-lg h-8 text-xs gap-1.5"
                           >
                             <X className="h-3.5 w-3.5" />
@@ -647,113 +622,7 @@ export default function StudentsPage() {
           </Card>
         </TabsContent>
 
-        {/* TAB: ROLE REQUESTS */}
-        <TabsContent value="role-requests" className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h3 className="text-lg font-bold tracking-tight">Role Upgrade Requests</h3>
-              <p className="text-xs text-[#7A7A7A]">
-                {user.role === "super_admin" 
-                  ? "Approve or reject requests for member and coordinator roles globally."
-                  : "Approve or reject requests for member tags in your club."
-                }
-              </p>
-            </div>
-          </div>
 
-          <Card className="bg-[#161616]/40 border-white/5 backdrop-blur-sm">
-            <Table>
-              <TableHeader className="border-white/5">
-                <TableRow className="hover:bg-transparent border-white/5">
-                  <TableHead className="text-[#7A7A7A]">Student Name</TableHead>
-                  <TableHead className="text-[#7A7A7A]">Club</TableHead>
-                  <TableHead className="text-[#7A7A7A]">Current Role</TableHead>
-                  <TableHead className="text-[#7A7A7A]">Requested Tag</TableHead>
-                  <TableHead className="text-right text-[#7A7A7A]">Approve / Reject</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {roleRequests.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-[#7A7A7A] italic">
-                      No pending role upgrade requests.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  roleRequests.map((student) => {
-                    const studentClub = clubs.find(c => c._id === (typeof student.clubId === 'object' && student.clubId ? (student.clubId as any)._id : student.clubId));
-                    return (
-                      <TableRow key={student._id} className="hover:bg-white/5 border-white/5">
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-8 w-8 border border-white/10">
-                              <AvatarImage src={`https://github.com/${student.codeforcesHandle}.png`} />
-                              <AvatarFallback className="bg-white/5 text-xs text-white">
-                                {student.name[0]?.toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div className="flex flex-col">
-                              <span className="font-semibold">{student.name}</span>
-                              <span className="text-[10px] text-[#7A7A7A] font-mono">{student.email}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {studentClub ? (
-                            <span className="text-xs font-semibold text-[#B5B5B5]">
-                              {studentClub.logo} {studentClub.name}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-[#7A7A7A] italic">None</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-white/5 border border-white/5 text-[#7A7A7A]">
-                            {student.role}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded ${
-                            student.requestedRole === 'coordinator' 
-                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                          }`}>
-                            {student.requestedRole}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={actionLoading !== null}
-                              onClick={() => handleRoleApprovalAction(student._id!, "approve")}
-                              className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg h-8 text-xs gap-1.5"
-                            >
-                              <Check className="h-3.5 w-3.5" />
-                              Approve
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="destructive"
-                              disabled={actionLoading !== null}
-                              onClick={() => handleRoleApprovalAction(student._id!, "reject")}
-                              className="rounded-lg h-8 text-xs gap-1.5"
-                            >
-                              <X className="h-3.5 w-3.5" />
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </Card>
-        </TabsContent>
 
         {/* TAB 3: MANAGE CLUBS (SUPER ADMIN ONLY) */}
         {user.role === "super_admin" && (

@@ -9,9 +9,23 @@ export default function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  useEffect(() => {
+    if (user && user._id) {
+      fetch(`/api/students/${user._id}/update-participation`, { method: "POST" })
+        .then(res => res.json())
+        .then(json => {
+          if (json.success && !json.cached) {
+            console.log("Background Codeforces auto-sync completed.");
+            refreshUser();
+          }
+        })
+        .catch(err => console.error("Error auto-syncing:", err));
+    }
+  }, [user?._id]);
 
   const authPages = ["/signin", "/signup"];
   const isAuthPage = pathname ? authPages.includes(pathname) : false;
@@ -21,22 +35,17 @@ export default function MainLayout({
       if (!user && !isAuthPage) {
         router.push("/signin");
       } else if (user) {
-        const hasClub = !!user.clubId;
         const isApproved = user.role !== "student"; // coordinator, member, super_admin are approved
 
         if (!isApproved) {
-          // If they are not approved, they can only access /profile or /join-club
-          if (pathname !== "/profile" && pathname !== "/join-club") {
-            if (hasClub) {
-              router.push("/profile");
-            } else {
-              router.push("/join-club");
-            }
-          }
-        } else {
-          // If they are approved, they shouldn't be on /join-club
-          if (pathname === "/join-club") {
-            router.push("/");
+          // If they are not approved, they can only access /profile, /potd, or /upcoming-contests
+          const isAllowedPath = 
+            pathname === "/profile" || 
+            pathname?.startsWith("/potd") || 
+            pathname?.startsWith("/upcoming-contests");
+
+          if (!isAllowedPath) {
+            router.push("/profile");
           }
         }
       }
@@ -65,6 +74,17 @@ export default function MainLayout({
   return (
     <div className="flex min-h-screen flex-col bg-[#0B0B0B] text-white">
       <TopNavigation />
+      {user && !user.codeforcesHandle && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 py-2.5 px-6 text-center">
+          <p className="text-xs font-semibold text-amber-400 flex items-center justify-center gap-2 flex-wrap">
+            <span>⚠️ You have not linked your Codeforces ID yet. Go to your</span>
+            <a href="/profile" className="underline hover:text-amber-300 transition-colors font-bold">
+              Profile Page
+            </a>
+            <span>to verify and connect it to sync your stats!</span>
+          </p>
+        </div>
+      )}
       <main className="mx-auto w-full max-w-[1600px] flex-1 px-6 pt-4 pb-12">
         {children}
       </main>

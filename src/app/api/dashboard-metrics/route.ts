@@ -12,10 +12,15 @@ export async function GET(req: Request) {
 
     const filter: any = {};
     if (clubId && clubId !== 'all') {
-      filter.clubId = clubId;
-      filter.clubJoinStatus = 'Approved';
+      filter.$or = [
+        { clubs: { $elemMatch: { clubId: clubId, status: 'Approved' } } },
+        { clubId: clubId, role: 'coordinator' }
+      ];
     } else {
-      filter.clubJoinStatus = 'Approved';
+      filter.$or = [
+        { "clubs.status": 'Approved' },
+        { role: 'coordinator' }
+      ];
     }
     const students = await Student.find(filter);
 

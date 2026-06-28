@@ -6,39 +6,66 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { 
-  Bell, 
-  Settings, 
   ChevronDown, 
   LogOut, 
-  User, 
-  Compass, 
-  Grid, 
-  Activity, 
-  Award, 
-  HelpCircle,
   Menu,
   X,
-  Code
+  Code,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { NotificationPopover } from "@/components/layout/notification-popover";
 import { Button } from "@/components/ui/button";
 
 export function TopNavigation() {
-  const { user, signout } = useAuth();
+  const { user, signout, refreshUser } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
   
   const [time, setTime] = useState<Date | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSync = async () => {
+    if (!user?._id) return;
+    setIsSyncing(true);
+    try {
+        const res = await fetch(`/api/students/${user._id}/update-participation?force=true`, { method: "POST" });
+        if (res.ok) {
+            await refreshUser();
+            toast({
+                title: "Synced",
+                description: "Your Codeforces data has been updated.",
+            });
+            setTimeout(() => {
+                window.location.reload();
+            }, 800);
+        } else {
+             toast({
+                title: "Sync Failed",
+                description: "Could not sync data. Try again later.",
+                variant: "destructive"
+            });
+        }
+    } catch (error) {
+        console.error("Sync error", error);
+         toast({
+            title: "Error",
+            description: "Something went wrong.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
     setTime(new Date());
@@ -129,11 +156,21 @@ export function TopNavigation() {
             <span>{user.points || 0} PTS</span>
           </div>
 
-          <NotificationPopover />
-
-          <Link href="/profile" className="hidden text-[#7A7A7A] hover:text-white transition-colors sm:block">
-            <Settings className="h-[18px] w-[18px] stroke-[1.5]" />
-          </Link>
+          {/* Sync Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleSync}
+            disabled={isSyncing}
+            className="text-[#7A7A7A] hover:text-white hover:bg-white/5 h-8 w-8 rounded-lg"
+            title="Sync Codeforces Data"
+          >
+            {isSyncing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+          </Button>
 
           {/* User Account Menu */}
           <DropdownMenu>
@@ -152,26 +189,6 @@ export function TopNavigation() {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 border-white/5 bg-[#161616] text-white">
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-semibold">{user.name}</p>
-                  <p className="text-xs text-[#7A7A7A] truncate">{user.email}</p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/5" />
-              
-              <DropdownMenuItem onClick={() => router.push("/profile")} className="focus:bg-white/5 focus:text-white cursor-pointer gap-2">
-                <User className="h-4 w-4 text-[#B5B5B5]" />
-                Profile
-              </DropdownMenuItem>
-
-              <DropdownMenuItem onClick={() => router.push(user.role === 'super_admin' || user.role === 'coordinator' ? '/students' : '/leaderboard')} className="focus:bg-white/5 focus:text-white cursor-pointer gap-2">
-                <Grid className="h-4 w-4 text-[#B5B5B5]" />
-                {user.role === 'super_admin' || user.role === 'coordinator' ? 'Manage Members' : 'Leaderboard'}
-              </DropdownMenuItem>
-
-              <DropdownMenuSeparator className="bg-white/5" />
-              
               <DropdownMenuItem onClick={signout} className="focus:bg-white/5 focus:text-red-400 text-red-500 cursor-pointer gap-2">
                 <LogOut className="h-4 w-4" />
                 Sign out

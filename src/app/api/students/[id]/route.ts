@@ -12,7 +12,7 @@ export async function GET(
   await dbConnect();
 
   try {
-    const student = await Student.findById(params.id).populate('clubId');
+    const student = await Student.findById(params.id).populate('clubId').populate('clubs.clubId');
     if (!student) {
       return NextResponse.json(
         { success: false, error: 'Student not found' },

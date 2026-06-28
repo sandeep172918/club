@@ -29,14 +29,14 @@ export async function updateStudentParticipation(studentId: string) {
         const { result: ratingHistory } = (await cfRatingResponse.json()) as any;
         rawRatingHistory = ratingHistory;
         if (ratingHistory && ratingHistory.length > 0) {
+          student.ratingHistory = ratingHistory.map((h: any) => ({
+            contestId: h.contestId.toString(),
+            contestName: h.contestName,
+            rating: h.newRating,
+            change: h.newRating - h.oldRating,
+            timestamp: new Date(h.ratingUpdateTimeSeconds * 1000),
+          }));
           const latestRating = ratingHistory[ratingHistory.length - 1];
-          student.ratingHistory = [{
-            contestId: latestRating.contestId.toString(),
-            contestName: latestRating.contestName,
-            rating: latestRating.newRating,
-            change: latestRating.newRating - latestRating.oldRating,
-            timestamp: new Date(latestRating.ratingUpdateTimeSeconds * 1000),
-          }];
           student.currentRating = latestRating.newRating;
         } else {
           student.ratingHistory = [];

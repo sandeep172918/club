@@ -26,10 +26,36 @@ export async function POST(req: NextRequest, context: any) {
       if (student.role !== 'super_admin' && student.role !== 'coordinator') {
         student.role = 'member';
       }
+
+      // Sync with clubs array
+      if (!student.clubs) {
+        student.clubs = [];
+      }
+      const clubRecord = student.clubs.find(
+        (c: any) => c.clubId.toString() === club._id.toString()
+      );
+      if (clubRecord) {
+        clubRecord.status = 'Approved';
+      } else {
+        student.clubs.push({ clubId: club._id, status: 'Approved' });
+      }
     } else if (action === 'reject') {
       student.clubJoinStatus = 'Rejected';
       if (student.role !== 'super_admin') {
         student.role = 'student';
+      }
+
+      // Sync with clubs array
+      if (!student.clubs) {
+        student.clubs = [];
+      }
+      const clubRecord = student.clubs.find(
+        (c: any) => c.clubId.toString() === club._id.toString()
+      );
+      if (clubRecord) {
+        clubRecord.status = 'Rejected';
+      } else {
+        student.clubs.push({ clubId: club._id, status: 'Rejected' });
       }
     }
 

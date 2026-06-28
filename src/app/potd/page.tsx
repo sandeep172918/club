@@ -108,6 +108,14 @@ export default function POTDPage() {
 
   return (
     <main className="p-4 md:p-8 space-y-8">
+      {user?.role === "student" && (
+        <div className="mb-6 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4 flex items-center gap-3">
+          <span className="text-amber-400 text-sm">⚠️</span>
+          <p className="text-xs text-[#B5B5B5] font-medium leading-relaxed">
+            If you want all access, you will need membership. Please request it on your <a href="/profile" className="text-amber-400 hover:underline font-bold">Profile Page</a>.
+          </p>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row justify-between items-center gap-4">
         <div>
             <DecryptedText

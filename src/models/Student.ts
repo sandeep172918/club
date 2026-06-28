@@ -30,6 +30,19 @@ const StudentSchema = new mongoose.Schema({
     enum: ['Pending', 'Approved', 'Rejected', 'None'],
     default: 'None',
   },
+  clubs: [
+    {
+      clubId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Club',
+      },
+      status: {
+        type: String,
+        enum: ['Pending', 'Approved', 'Rejected', 'None'],
+        default: 'None',
+      }
+    }
+  ],
   requestedRole: {
     type: String,
     enum: ['member', 'coordinator'],
@@ -73,6 +86,10 @@ const StudentSchema = new mongoose.Schema({
   points: {
     type: Number,
     default: 0,
+  },
+  lastSyncedCodeforces: {
+    type: Date,
+    default: null,
   },
   solvedPOTDs: [{
     type: String, // Storing POTD IDs

@@ -17,12 +17,16 @@ export async function GET(req: Request) {
     const clubContestFilter: any = {};
     
     if (clubId && clubId !== 'all') {
-      filter.clubId = clubId;
-      filter.clubJoinStatus = 'Approved';
+      filter.$or = [
+        { clubs: { $elemMatch: { clubId: clubId, status: 'Approved' } } },
+        { clubId: clubId, role: 'coordinator' }
+      ];
       clubContestFilter.clubId = clubId;
     } else {
-      // By default only show approved members
-      filter.clubJoinStatus = 'Approved';
+      filter.$or = [
+        { "clubs.status": 'Approved' },
+        { role: 'coordinator' }
+      ];
     }
 
     const students = await Student.find(filter);
@@ -72,9 +76,9 @@ export async function GET(req: Request) {
     const recentActivities: any[] = [];
     const heatmapDataMap: { [key: string]: number } = {};
 
-    // Populate default heatmap values for the last 100 days
+    // Populate default heatmap values for the last 365 days
     const today = startOfDay(new Date());
-    for (let i = 99; i >= 0; i--) {
+    for (let i = 364; i >= 0; i--) {
       const d = subDays(today, i);
       const dateString = format(d, 'yyyy-MM-dd');
       heatmapDataMap[dateString] = 0;
@@ -141,7 +145,7 @@ export async function GET(req: Request) {
         student.solvedPOTDs.forEach((potdId: string) => {
           // Heatmap increment for POTD (mock date or check DB - we increment based on generic activity)
           // For simplicity, we increment a random recent day slightly to simulate realistic solving
-          const randomPastDays = Math.floor(Math.random() * 30);
+          const randomPastDays = Math.floor(Math.random() * 365);
           const solvedDate = subDays(today, randomPastDays);
           const solvedDateStr = format(solvedDate, 'yyyy-MM-dd');
           if (heatmapDataMap[solvedDateStr] !== undefined) {

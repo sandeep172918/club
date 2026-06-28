@@ -24,8 +24,18 @@ export default function VerifyCodeforcesDialog({
 }: VerifyCodeforcesDialogProps) {
   const [handle, setHandle] = useState("");
   const [step, setStep] = useState<"input" | "challenge">("input");
+  const [verificationString, setVerificationString] = useState("");
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
+  const generateRandomString = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    let result = "CPCPP_";
+    for (let i = 0; i < 8; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result.toUpperCase();
+  };
   const { toast } = useToast();
 
   const checkHandleExists = async () => {
@@ -35,6 +45,7 @@ export default function VerifyCodeforcesDialog({
       const res = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
       const data = await res.json();
       if (data.status === "OK") {
+        setVerificationString(generateRandomString());
         setStep("challenge");
       } else {
         toast({
@@ -57,44 +68,38 @@ export default function VerifyCodeforcesDialog({
   const verifySubmission = async () => {
     setLoading(true);
     try {
-      // Fetch last 5 submissions to be safe
-      const res = await fetch(`https://codeforces.com/api/user.status?handle=${handle}&from=1&count=5`);
+      const res = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
       const data = await res.json();
       
       if (data.status === "OK" && data.result.length > 0) {
-        // Find a submission to problem 1/A that is recent (e.g. within last 10 minutes)
-        const recentSubmission = data.result.find((sub: any) => {
-            const isProblem1A = sub.problem.contestId === 1 && sub.problem.index === "A";
-            const submissionTime = sub.creationTimeSeconds * 1000;
-            const now = Date.now();
-            const isRecent = (now - submissionTime) < 10 * 60 * 1000; // 10 minutes
-            return isProblem1A && isRecent;
-        });
-
-        if (recentSubmission) {
+        const cfUser = data.result[0];
+        const cfFirstName = cfUser.firstName || "";
+        
+        if (cfFirstName.trim().toUpperCase() === verificationString.toUpperCase()) {
              await onVerified(handle);
              setIsOpen(false);
              // Reset state
              setStep("input");
              setHandle("");
+             setVerificationString("");
         } else {
              toast({
                 title: "Verification Failed",
-                description: "Could not find a recent submission to problem 1/A from this handle. Please try again.",
+                description: `Could not find the verification code in your profile's First Name. Found: '${cfFirstName || "None"}'. Expected: '${verificationString}'.`,
                 variant: "destructive",
             });
         }
       } else {
          toast({
             title: "Verification Failed",
-            description: "No submissions found or API error.",
+            description: "Could not fetch user info from Codeforces. Please try again.",
             variant: "destructive",
         });
       }
     } catch (error) {
        toast({
         title: "Error",
-        description: "Failed to verify submission.",
+        description: "Failed to verify Codeforces handle.",
         variant: "destructive",
       });
     } finally {
@@ -146,28 +151,28 @@ export default function VerifyCodeforcesDialog({
           <div className="grid gap-4 py-4">
              <div className="rounded-md bg-muted p-4 text-sm">
                 <p className="font-medium mb-2">Instructions:</p>
-                <ol className="list-decimal list-inside space-y-2">
+                <ol className="list-decimal list-inside space-y-2.5">
                     <li>
-                        Go to problem <a href="https://codeforces.com/contest/1/problem/A" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline inline-flex items-center gap-1">
-                            1/A (Theatre Square) <ExternalLink className="h-3 w-3"/>
+                        Go to your Codeforces <a href="https://codeforces.com/settings/social" target="_blank" rel="noopener noreferrer" className="text-[#7EE787] hover:underline inline-flex items-center gap-1 font-semibold">
+                            Profile Settings <ExternalLink className="h-3 w-3"/>
                         </a>
                     </li>
                     <li>
-                        Submit a solution with <strong>Compilation Error</strong> (select any language).
-                    </li>
-                    <li>
-                        The source code MUST be exactly your handle:
+                        Change your <strong>First Name</strong> to:
                         <div className="mt-1 flex items-center gap-2">
-                            <code className="bg-black text-white px-2 py-1 rounded select-all">
-                                {handle}
+                            <code className="bg-black text-white px-2 py-1 rounded select-all font-mono text-xs border border-white/10">
+                                {verificationString}
                             </code>
-                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(handle)}>
+                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(verificationString)}>
                                 <Copy className="h-3 w-3"/>
                             </Button>
                         </div>
                     </li>
+                    <li className="text-xs text-[#7A7A7A]">
+                        Make sure to click <strong>Save Changes</strong> at the bottom of the settings page.
+                    </li>
                     <li>
-                        Click <strong>Done</strong> below.
+                        Click <strong>Verify</strong> below.
                     </li>
                 </ol>
              </div>
@@ -185,10 +190,10 @@ export default function VerifyCodeforcesDialog({
                    <Button variant="ghost" onClick={() => setStep("input")} disabled={loading}>
                        Back
                    </Button>
-                   <Button onClick={verifySubmission} disabled={loading}>
-                       {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                       Done, I have submitted
-                   </Button>
+                    <Button onClick={verifySubmission} disabled={loading}>
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Verify
+                    </Button>
                </div>
            )}
         </DialogFooter>
